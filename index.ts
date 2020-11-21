@@ -1,3 +1,4 @@
+import { URL_DATABASE } from './global/config';
 import { Server } from './classes/server';
 import { router } from './routes/router';
 import cors from 'cors';
@@ -5,7 +6,7 @@ import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
 
 
-mongoose.connect('mongodb://localhost:27017/tesis', {useNewUrlParser: true, useUnifiedTopology: true},(err)=>{
+mongoose.connect(URL_DATABASE, {useNewUrlParser: true, useUnifiedTopology: true},(err)=>{
     if(err){
         throw new Error('Error de Conexión')
     } 

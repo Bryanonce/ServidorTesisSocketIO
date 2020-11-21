@@ -1,2 +1,7 @@
 node_modules/
-dist/
+classes/
+global/
+routes/
+schemas/
+sockets/
+index.ts
