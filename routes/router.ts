@@ -9,7 +9,7 @@ import { OAuth2Client } from 'google-auth-library';
 
 import {validacionToken, validarRol} from '../middlewares/mid';
 
-const client = new OAuth2Client(process.env.CLIENTE_GOOGLE);
+const client = new OAuth2Client(CLIENTE);
 
 router.get('/users', [validacionToken,validarRol] ,(req:Request,res:Response)=>{
     Usuario.find({})

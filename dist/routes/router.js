@@ -22,7 +22,7 @@ const usuarios_1 = __importDefault(require("../schemas/usuarios"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const google_auth_library_1 = require("google-auth-library");
 const mid_1 = require("../middlewares/mid");
-const client = new google_auth_library_1.OAuth2Client(process.env.CLIENTE_GOOGLE);
+const client = new google_auth_library_1.OAuth2Client(config_1.CLIENTE);
 exports.router.get('/users', [mid_1.validacionToken, mid_1.validarRol], (req, res) => {
     usuarios_1.default.find({})
         .exec((err, usuarios) => {
