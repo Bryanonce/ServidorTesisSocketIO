@@ -193,6 +193,7 @@ exports.router.post('/google', (req, res) => __awaiter(void 0, void 0, void 0, f
                 nombre: googleUser.nombre,
                 email: googleUser.email,
                 google: true,
+                img: googleUser.img,
                 pass: ':)'
             });
             usuario.save((err, usuarioDb) => {

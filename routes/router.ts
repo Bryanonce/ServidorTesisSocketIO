@@ -6,7 +6,6 @@ export const router = Router();
 import Usuario from '../schemas/usuarios';
 import bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
-
 import {validacionToken, validarRol} from '../middlewares/mid';
 
 const client = new OAuth2Client(CLIENTE);
@@ -121,7 +120,6 @@ router.post('/login',(req:Request,res:Response)=>{
     });
 })
 
-
 // Configuraciones de Google
 async function verify(token:string) {
     const ticket = await client.verifyIdToken({
@@ -131,14 +129,12 @@ async function verify(token:string) {
         //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
     });
     const payload:any = ticket.getPayload();
-
     return {
         nombre: payload.name,
         email: payload.email,
         img: payload.picture,
         google: true
     }
-
 }
 
 router.post('/google', async (req:Request,res:Response)=>{
@@ -182,6 +178,7 @@ router.post('/google', async (req:Request,res:Response)=>{
                     nombre: googleUser.nombre,
                     email: googleUser.email,
                     google: true,
+                    img: googleUser.img,
                     pass: ':)'
                 });
                 usuario.save((err, usuarioDb) => {
