@@ -4,6 +4,8 @@ import { router } from './routes/router';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
+import path from 'path';
+import express from 'express';
 
 
 mongoose.connect(URL_DATABASE, {useNewUrlParser: true, useUnifiedTopology: true},(err)=>{
@@ -15,6 +17,9 @@ mongoose.connect(URL_DATABASE, {useNewUrlParser: true, useUnifiedTopology: true}
 
 
 const server = Server.instance;
+
+//Public
+server.app.use(express.static(path.resolve(__dirname, './public')))
 
 //BodyParser
 server.app.use( bodyParser.urlencoded({ extended: true }) );

@@ -1,4 +1,5 @@
 import mongoose,{ Schema } from 'mongoose';
+
 const objeto = {
 	type: Number,
 	required: [true, "Se necesita el dato completo"]
