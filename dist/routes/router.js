@@ -20,9 +20,9 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 exports.router = express_1.Router();
 const usuarios_1 = __importDefault(require("../schemas/usuarios"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
-const { OAuth2Client } = require('google-auth-library');
-const client = new OAuth2Client(config_1.CLIENTE);
+const google_auth_library_1 = require("google-auth-library");
 const mid_1 = require("../middlewares/mid");
+const client = new google_auth_library_1.OAuth2Client(config_1.CLIENTE);
 exports.router.get('/users', [mid_1.validacionToken, mid_1.validarRol], (req, res) => {
     usuarios_1.default.find({})
         .exec((err, usuarios) => {

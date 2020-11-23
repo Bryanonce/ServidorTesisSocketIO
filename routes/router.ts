@@ -5,11 +5,11 @@ import jwt from 'jsonwebtoken';
 export const router = Router();
 import Usuario from '../schemas/usuarios';
 import bcrypt from 'bcrypt';
-const { OAuth2Client } = require('google-auth-library');
-const client = new OAuth2Client(CLIENTE);
+import { OAuth2Client } from 'google-auth-library';
 
 import {validacionToken, validarRol} from '../middlewares/mid';
 
+const client = new OAuth2Client(CLIENTE);
 
 router.get('/users', [validacionToken,validarRol] ,(req:Request,res:Response)=>{
     Usuario.find({})
