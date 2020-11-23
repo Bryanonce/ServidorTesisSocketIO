@@ -139,7 +139,7 @@ async function verify(token:string) {
 
 router.post('/google', async (req:Request,res:Response)=>{
     if(!req.body.idtoken){
-        res.json({
+        return res.json({
             ok:false,
             message: 'No se encontró el token'
         });

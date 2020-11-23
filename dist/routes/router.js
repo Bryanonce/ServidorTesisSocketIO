@@ -150,7 +150,7 @@ function verify(token) {
 }
 exports.router.post('/google', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.body.idtoken) {
-        res.json({
+        return res.json({
             ok: false,
             message: 'No se encontró el token'
         });
