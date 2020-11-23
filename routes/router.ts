@@ -138,6 +138,12 @@ async function verify(token:string) {
 }
 
 router.post('/google', async (req:Request,res:Response)=>{
+    if(!req.body.idtoken){
+        res.json({
+            ok:false,
+            message: 'No se encontró el token'
+        });
+    }
 	let token = req.body.idtoken;
     let googleUser:any = await verify(token)
         .catch(e => {
