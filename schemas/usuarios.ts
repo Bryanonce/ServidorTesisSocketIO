@@ -1,14 +1,14 @@
-import mongoose,{Schema} from 'mongoose';
+import mongoose,{ Schema } from 'mongoose';
 import uniqueVal from 'mongoose-unique-validator';
 
 //Interfaces
-let tiposValidos = {
+const tiposValidos = {
     values: ['ACCESO_RECURSOS', 'ESTUDIANTES'],
     message: '{VALUE} no es un rol válido'
 }
 
 //Cuerpo
-let usuarioSchema = new Schema({
+const usuarioSchema = new Schema({
     nombre: {
         type: String,
         required: [true, 'Se necesita el nombre']

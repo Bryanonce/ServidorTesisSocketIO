@@ -25,12 +25,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const mongoose_unique_validator_1 = __importDefault(require("mongoose-unique-validator"));
 //Interfaces
-let tiposValidos = {
+const tiposValidos = {
     values: ['ACCESO_RECURSOS', 'ESTUDIANTES'],
     message: '{VALUE} no es un rol válido'
 };
 //Cuerpo
-let usuarioSchema = new mongoose_1.Schema({
+const usuarioSchema = new mongoose_1.Schema({
     nombre: {
         type: String,
         required: [true, 'Se necesita el nombre']
