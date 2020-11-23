@@ -4,4 +4,4 @@ export const URL_DATABASE:string = process.env.MONGO_URI || 'mongodb://localhost
 
 export const SEMILLA:string = process.env.SEED || 'semilla-de-prueba';
 
-export const CLIENTE:string = '1003353693226-5p1okcfq6r6ivp1oe99o8o7omfcvu41m.apps.googleusercontent.com';
+export const CLIENTE:string = '1003353693226-qb903v62a9dvivgeh2qn6q2hk6d804ha.apps.googleusercontent.com';
