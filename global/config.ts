@@ -4,4 +4,6 @@ export const URL_DATABASE:string = String(process.env.MONGO_URI) || 'mongodb://l
 
 export const SEMILLA:string = String(process.env.SEED) || 'semilla-de-prueba';
 
-export const CLIENTE:string = String(process.env.CLIENV)
+export const CLIENTE:string = String(process.env.CLIENV);
+
+export const CADUCIDAD:number = Number(process.env.CAD_TOKEN) || 60 * 60 * 24 * 30;
