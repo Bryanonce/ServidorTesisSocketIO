@@ -1,7 +1,53 @@
+import {SEMILLA,CLIENTE} from '../global/config';
 import { Router, Request, Response } from 'express';
 import baseDatos from '../schemas/coordSchema';
-
+import jwt from 'jsonwebtoken';
 export const router = Router();
+import Usuario from '../schemas/usuarios';
+import bcrypt from 'bcrypt';
+import { OAuth2Client } from 'google-auth-library';
+
+import {validacionToken, validarRol} from '../middlewares/mid';
+
+const client = new OAuth2Client(process.env.CLIENTE_GOOGLE);
+
+router.get('/users', [validacionToken,validarRol] ,(req:Request,res:Response)=>{
+    Usuario.find({})
+        .exec((err, usuarios) => {
+            if (err) {
+                return res.status(400).json({
+                    ok: false,
+                    message: err
+                })
+            }
+            res.json({
+                ok: true,
+                usuarios
+            })
+        })
+})
+
+router.post('/user',(req:Request,res:Response)=>{
+    let body = req.body;
+    let usuario = new Usuario({
+        email: body.email,
+        pass: bcrypt.hashSync(body.pass, 10),
+        tipo: body.tipo,
+        nombre: body.nombre
+    })
+    usuario.save((err, usuarioDb) => {
+        if (err) {
+            return res.status(400).json({
+                ok: false,
+                message: err
+            })
+        }
+        res.json({
+            ok: true,
+            usuario: usuarioDb
+        })
+    })
+})
 
 router.get('/datos',(req:Request,res:Response)=>{
     let anioIni = req.query.anioIni || 2019;
@@ -43,6 +89,115 @@ router.get('/datos',(req:Request,res:Response)=>{
 	})
 })
 
-router.post('/',(req:Request,res:Response)=>{
-    
+router.post('/login',(req:Request,res:Response)=>{
+    let body = req.body;
+    Usuario.findOne({ email: body.email }, (err, usuarioDb:any) => {
+        if (err) {
+            return res.status(401).json({
+                ok: false,
+                msg: 'No hay match',
+                err
+            });
+        };
+        if (!usuarioDb) {
+            return res.status(401).json({
+                ok: false,
+                msg: 'No existe',
+                err
+            });
+        };
+        if (!bcrypt.compareSync(body.pass, usuarioDb.pass)) {
+            return res.status(401).json({
+                ok: false,
+                msg: 'No hay match',
+                err
+            });
+        };
+        let token = jwt.sign({ usuarioDb }, SEMILLA, { expiresIn: process.env.CAD_TOKEN })
+        res.json({
+            ok: true,
+            token: token
+        });
+    });
 })
+
+
+// Configuraciones de Google
+async function verify(token:string) {
+    const ticket = await client.verifyIdToken({
+        idToken: token,
+        audience: CLIENTE, // Specify the CLIENT_ID of the app that accesses the backend
+        // Or, if multiple clients access the backend:
+        //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
+    });
+    const payload:any = ticket.getPayload();
+
+    return {
+        nombre: payload.name,
+        email: payload.email,
+        img: payload.picture,
+        google: true
+    }
+
+}
+
+router.post('/google', async (req:Request,res:Response)=>{
+	let token = req.body.idtoken;
+    let googleUser:any = await verify(token)
+        .catch(e => {
+            return res.status(403).json({
+                ok: false,
+                err: e
+            });
+        });
+    Usuario.findOne({ email: googleUser.email })
+        .exec((err, usuarioDb:any) => {
+            if (err) {
+                return res.status(500).json({
+                    ok: false,
+                    err
+                });
+            };
+            if (usuarioDb) {
+                if (usuarioDb.google === false) {
+                    return res.status(400).json({
+                        ok: false,
+                        message: {
+                            desc: 'Debe utilizar su auth normal',
+                            error: err
+                        }
+                    });
+                } else {
+                    let token = jwt.sign({ usuarioDb }, SEMILLA, { expiresIn: process.env.CAD_TOKEN });
+                    return res.json({
+                        ok: true,
+                        usuario: usuarioDb,
+                        token
+                    });
+                };
+            } else {
+                //SI EL USER NO EXISTE
+                let usuario = new Usuario({
+                    nombre: googleUser.nombre,
+                    email: googleUser.email,
+                    google: true,
+                    pass: ':)'
+                });
+                usuario.save((err, usuarioDb) => {
+                    if (err) {
+                        return res.status(400).json({
+                            ok: false,
+                            usuario: [],
+                            token: ''
+                        })
+                    }
+                    let token = jwt.sign({ usuarioDb }, SEMILLA, { expiresIn: process.env.CAD_TOKEN });
+                    return res.json({
+                        ok: true,
+                        usuario: usuarioDb,
+                        token
+                    });
+                })
+            }
+        })
+});
