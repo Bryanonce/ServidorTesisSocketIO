@@ -5,11 +5,11 @@ import jwt from 'jsonwebtoken';
 export const router = Router();
 import Usuario from '../schemas/usuarios';
 import bcrypt from 'bcrypt';
-import { OAuth2Client } from 'google-auth-library';
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client(CLIENTE);
 
 import {validacionToken, validarRol} from '../middlewares/mid';
 
-const client = new OAuth2Client(CLIENTE);
 
 router.get('/users', [validacionToken,validarRol] ,(req:Request,res:Response)=>{
     Usuario.find({})
@@ -147,6 +147,7 @@ router.post('/google', async (req:Request,res:Response)=>{
         .catch(e => {
             return res.status(403).json({
                 ok: false,
+                message: 'Error Status 403',
                 err: e
             });
         });
