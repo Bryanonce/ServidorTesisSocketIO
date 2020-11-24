@@ -7,6 +7,7 @@ import Usuario from '../schemas/usuarios';
 import bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
 import {validacionToken, validarRol} from '../middlewares/mid';
+import UltiDato from '../schemas/ultimaCoorSchema';
 
 const client = new OAuth2Client(CLIENTE);
 
@@ -205,3 +206,19 @@ router.post('/google', async (req:Request,res:Response)=>{
             }
         })
 });
+
+router.get('/ultidatos', (req:Request,res:Response)=>{
+    UltiDato.find({})
+    .exec((err,usuarioDb)=>{
+        if(err){
+            return res.status(400).json({
+                ok:false,
+                datos: []
+            })
+        }
+        return res.json({
+            ok:true,
+            datos: usuarioDb
+        })
+    })
+})

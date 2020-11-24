@@ -24,18 +24,20 @@ const objeto = {
     type: Number,
     required: [true, "Se necesita el dato completo"]
 };
-const datoSchema = new mongoose_1.Schema({
-    mat: {
+const UltCoordSchem = new mongoose_1.Schema({
+    nombre: {
         type: String,
-        required: [true, "Se necesita Identificación"]
+        required: [true, 'Se necesita el nombre']
+    },
+    img: {
+        type: String,
+        default: ''
     },
     lat: objeto,
     long: objeto,
-    anio: objeto,
-    mes: objeto,
-    dia: objeto,
-    hora: objeto,
-    minuto: objeto,
-    segundo: objeto
+    color: {
+        type: String,
+        required: [true, "Se necesita Color"]
+    }
 });
-exports.default = mongoose_1.default.model('Datos', datoSchema);
+exports.default = mongoose_1.default.model('UltCoor', UltCoordSchem);

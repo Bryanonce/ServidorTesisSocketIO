@@ -22,6 +22,7 @@ const usuarios_1 = __importDefault(require("../schemas/usuarios"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const google_auth_library_1 = require("google-auth-library");
 const mid_1 = require("../middlewares/mid");
+const ultimaCoorSchema_1 = __importDefault(require("../schemas/ultimaCoorSchema"));
 const client = new google_auth_library_1.OAuth2Client(config_1.CLIENTE);
 exports.router.get('/users', [mid_1.validacionToken, mid_1.validarRol], (req, res) => {
     usuarios_1.default.find({})
@@ -220,3 +221,18 @@ exports.router.post('/google', (req, res) => __awaiter(void 0, void 0, void 0, f
         }
     });
 }));
+exports.router.get('/ultidatos', (req, res) => {
+    ultimaCoorSchema_1.default.find({})
+        .exec((err, usuarioDb) => {
+        if (err) {
+            return res.status(400).json({
+                ok: false,
+                datos: []
+            });
+        }
+        return res.json({
+            ok: true,
+            datos: usuarioDb
+        });
+    });
+});

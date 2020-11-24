@@ -21,21 +21,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const objeto = {
-    type: Number,
-    required: [true, "Se necesita el dato completo"]
+    type: String
 };
-const datoSchema = new mongoose_1.Schema({
-    mat: {
-        type: String,
-        required: [true, "Se necesita Identificación"]
-    },
-    lat: objeto,
-    long: objeto,
-    anio: objeto,
-    mes: objeto,
-    dia: objeto,
-    hora: objeto,
-    minuto: objeto,
-    segundo: objeto
+const notiSchema = new mongoose_1.Schema({
+    fecha: objeto,
+    titulo: objeto,
+    copete: objeto,
+    foto: objeto,
+    cuerpo: objeto,
+    epigrafe: objeto
 });
-exports.default = mongoose_1.default.model('Datos', datoSchema);
+exports.default = mongoose_1.default.model('Noticia', notiSchema);
