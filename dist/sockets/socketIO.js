@@ -24,10 +24,10 @@ exports.conectarCliente = (cliente, io) => {
         });
         datos.save((err, datoBd) => {
             if (err) {
-                callback(err);
+                return;
             }
             io.emit('recargar', { lat: payload.lat, long: payload.long, });
-            callback(datoBd);
+            //callback(datoBd)            
         });
         usuarios_1.default.findById(payload.mat)
             .exec((err, usuarioDb) => {
@@ -55,7 +55,7 @@ exports.conectarCliente = (cliente, io) => {
                         if (err) {
                             return;
                         }
-                        io.emit('sonsoPer', datoBd);
+                        io.emit('recargar', datoBd);
                     });
                     return;
                 }
@@ -64,7 +64,7 @@ exports.conectarCliente = (cliente, io) => {
                     lat: payload.lat,
                     long: payload.long
                 });
-                io.emit('sonsoPer', coorDb);
+                io.emit('recargar', coorDb);
             });
         });
     });

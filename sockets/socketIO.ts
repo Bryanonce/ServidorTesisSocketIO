@@ -22,10 +22,10 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
         })
         datos.save((err,datoBd)=>{
             if(err){
-                callback(err)
+                return
             }
             io.emit('recargar',{lat: payload.lat,long: payload.long,})
-            callback(datoBd)            
+            //callback(datoBd)            
         });
         Usuarios.findById(payload.mat)
             .exec((err,usuarioDb:UsuarioInterface)=>{
@@ -53,7 +53,7 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
                                 if(err){
                                     return
                                 }
-                                io.emit('sonsoPer',datoBd)
+                                io.emit('recargar',datoBd)
                             })
                             return
                         }
@@ -62,7 +62,7 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
                             lat: payload.lat,
                             long: payload.long
                         })
-                        io.emit('sonsoPer',coorDb)
+                        io.emit('recargar',coorDb)
                     })
             })
         
