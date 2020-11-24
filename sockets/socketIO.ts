@@ -1,6 +1,5 @@
 import baseDatos from '../schemas/coordSchema';
 import io, {Socket} from 'socket.io';
-import notiSchema from '../schemas/notiSchema';
 import UltiCoor from '../schemas/ultimaCoorSchema';
 import Usuarios from '../schemas/usuarios';
 import UsuarioInterface from '../classes/usuario'
@@ -53,7 +52,7 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
                                 if(err){
                                     return
                                 }
-                                io.emit('recargar',datoBd)
+                                io.emit('actualCoor',datoBd)
                             })
                             return
                         }
@@ -62,7 +61,7 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
                             lat: payload.lat,
                             long: payload.long
                         })
-                        io.emit('recargar',coorDb)
+                        io.emit('actualCoor',coorDb)
                     })
             })
         

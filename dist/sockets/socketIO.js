@@ -55,7 +55,7 @@ exports.conectarCliente = (cliente, io) => {
                         if (err) {
                             return;
                         }
-                        io.emit('recargar', datoBd);
+                        io.emit('actualCoor', datoBd);
                     });
                     return;
                 }
@@ -64,7 +64,7 @@ exports.conectarCliente = (cliente, io) => {
                     lat: payload.lat,
                     long: payload.long
                 });
-                io.emit('recargar', coorDb);
+                io.emit('actualCoor', coorDb);
             });
         });
     });
