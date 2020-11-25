@@ -42,7 +42,7 @@ exports.conectarCliente = (cliente, io) => {
             if (!usuarioDb) {
                 return;
             }
-            ultimaCoorSchema_1.default.findById(payload.mat)
+            ultimaCoorSchema_1.default.findByIdAndUpdate(payload.mat, { img: usuarioDb.img, lat: payload.lat, long: payload.long })
                 .exec((err, coorDb) => {
                 if (err) {
                     return;
@@ -61,17 +61,8 @@ exports.conectarCliente = (cliente, io) => {
                             return;
                         }
                         //io.emit('actualCoor',datoBd)
-                        coordenada = datoBd;
+                        //coordenada = datoBd
                     });
-                }
-                else {
-                    coorDb.update({
-                        img: usuarioDb.img,
-                        lat: payload.lat,
-                        long: payload.long
-                    });
-                    coordenada = coorDb;
-                    //io.emit('actualCoor',coorDb)
                 }
             });
         });

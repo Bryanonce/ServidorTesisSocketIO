@@ -39,7 +39,7 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
                 if(!usuarioDb){
                     return
                 }
-                UltiCoor.findById(payload.mat)
+                UltiCoor.findByIdAndUpdate(payload.mat,{img: usuarioDb.img,lat: payload.lat,long: payload.long})
                     .exec((err,coorDb)=>{
                         if(err){
                             return
@@ -58,16 +58,8 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
                                     return
                                 }
                                 //io.emit('actualCoor',datoBd)
-                                coordenada = datoBd
+                                //coordenada = datoBd
                             })
-                        }else{
-                            coorDb.update({
-                                img: usuarioDb.img,
-                                lat: payload.lat,
-                                long: payload.long
-                            })
-                            coordenada = coorDb
-                            //io.emit('actualCoor',coorDb)
                         }
                     })
             })
