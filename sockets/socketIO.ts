@@ -23,7 +23,7 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
             if(err){
                 return
             }
-            io.emit('recargar',{lat: payload.lat,long: payload.long,})
+            cliente.broadcast.emit('recargar',{lat: payload.lat,long: payload.long,})
             //callback(datoBd)            
         });
         Usuarios.findById(payload.mat)
@@ -52,7 +52,7 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
                                 if(err){
                                     return
                                 }
-                                io.emit('actualCoor',datoBd)
+                                cliente.broadcast.emit('actualCoor',datoBd)
                             })
                             return
                         }
@@ -61,7 +61,7 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
                             lat: payload.lat,
                             long: payload.long
                         })
-                        io.emit('actualCoor',coorDb)
+                        cliente.broadcast.emit('actualCoor',coorDb)
                     })
             })
         
