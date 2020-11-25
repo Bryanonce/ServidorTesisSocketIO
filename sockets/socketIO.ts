@@ -52,16 +52,16 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
                                 if(err){
                                     return
                                 }
-                                cliente.broadcast.emit('actualCoor',datoBd)
+                                io.emit('actualCoor',datoBd)
                             })
-                            return
+                        }else{
+                            coorDb.update({
+                                img: usuarioDb.img,
+                                lat: payload.lat,
+                                long: payload.long
+                            })
+                            io.emit('actualCoor',coorDb)
                         }
-                        coorDb.update({
-                            img: usuarioDb.img,
-                            lat: payload.lat,
-                            long: payload.long
-                        })
-                        cliente.broadcast.emit('actualCoor',coorDb)
                     })
             })
         

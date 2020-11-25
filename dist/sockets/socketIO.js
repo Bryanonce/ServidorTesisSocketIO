@@ -55,16 +55,17 @@ exports.conectarCliente = (cliente, io) => {
                         if (err) {
                             return;
                         }
-                        cliente.broadcast.emit('actualCoor', datoBd);
+                        io.emit('actualCoor', datoBd);
                     });
-                    return;
                 }
-                coorDb.update({
-                    img: usuarioDb.img,
-                    lat: payload.lat,
-                    long: payload.long
-                });
-                cliente.broadcast.emit('actualCoor', coorDb);
+                else {
+                    coorDb.update({
+                        img: usuarioDb.img,
+                        lat: payload.lat,
+                        long: payload.long
+                    });
+                    io.emit('actualCoor', coorDb);
+                }
             });
         });
     });
