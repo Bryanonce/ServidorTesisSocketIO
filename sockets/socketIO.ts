@@ -15,7 +15,7 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
             anio: fecha.getFullYear(),
             mes: fecha.getMonth(),
             dia: fecha.getDate(),
-            hora: fecha.getHours()-5,
+            hora: Number(fecha.getHours())-5,
             minuto: fecha.getMinutes(),
             segundo: fecha.getSeconds()
         })
