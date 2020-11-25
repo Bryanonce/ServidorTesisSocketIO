@@ -26,7 +26,7 @@ exports.conectarCliente = (cliente, io) => {
             if (err) {
                 return;
             }
-            cliente.broadcast.emit('recargar', { lat: payload.lat, long: payload.long, });
+            io.emit('recargar', { lat: payload.lat, long: payload.long, });
             //callback(datoBd)            
         });
         usuarios_1.default.findById(payload.mat)

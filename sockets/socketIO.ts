@@ -23,7 +23,7 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
             if(err){
                 return
             }
-            cliente.broadcast.emit('recargar',{lat: payload.lat,long: payload.long,})
+            io.emit('recargar',{lat: payload.lat,long: payload.long,})
             //callback(datoBd)            
         });
         Usuarios.findById(payload.mat)
