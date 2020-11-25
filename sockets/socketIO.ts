@@ -8,6 +8,10 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
     cliente.on('enviarCoordServ',(payload:{mat:string,lat:number,long:number},callback:Function)=>{
         console.log('Usuario ha enviado coordenadas')
         let fecha = new Date()
+        let hora:number = Number(fecha.getHours())-5;
+        if(hora<0){
+            hora+=24
+        }
         let datos = new baseDatos({
             mat: payload.mat,
             lat: payload.lat,
@@ -15,7 +19,7 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
             anio: fecha.getFullYear(),
             mes: fecha.getMonth(),
             dia: fecha.getDate(),
-            hora: Number(fecha.getHours())-5,
+            hora: hora,
             minuto: fecha.getMinutes(),
             segundo: fecha.getSeconds()
         })

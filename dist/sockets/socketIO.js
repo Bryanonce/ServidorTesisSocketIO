@@ -11,6 +11,10 @@ exports.conectarCliente = (cliente, io) => {
     cliente.on('enviarCoordServ', (payload, callback) => {
         console.log('Usuario ha enviado coordenadas');
         let fecha = new Date();
+        let hora = Number(fecha.getHours()) - 5;
+        if (hora < 0) {
+            hora += 24;
+        }
         let datos = new coordSchema_1.default({
             mat: payload.mat,
             lat: payload.lat,
@@ -18,7 +22,7 @@ exports.conectarCliente = (cliente, io) => {
             anio: fecha.getFullYear(),
             mes: fecha.getMonth(),
             dia: fecha.getDate(),
-            hora: Number(fecha.getHours()) - 5,
+            hora: hora,
             minuto: fecha.getMinutes(),
             segundo: fecha.getSeconds()
         });
