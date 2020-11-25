@@ -31,7 +31,7 @@ exports.conectarCliente = (cliente, io) => {
             if (err) {
                 return;
             }
-            coordenada = { lat: payload.lat, long: payload.long, };
+            //io.emit('recargar',{lat: payload.lat,long: payload.long,})
             //callback(datoBd)            
         });
         usuarios_1.default.findById(payload.mat)
@@ -75,7 +75,7 @@ exports.conectarCliente = (cliente, io) => {
                 }
             });
         });
-        io.emit('actualCoor', coordenada);
+        io.emit('recargar', { lat: payload.lat, long: payload.long, _id: payload.mat });
     });
 };
 /*export const noticiasAdmin = (admin:Socket, io:io.Server)=>{

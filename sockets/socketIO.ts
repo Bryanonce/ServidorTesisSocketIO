@@ -28,7 +28,7 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
             if(err){
                 return
             }
-            coordenada = {lat: payload.lat,long: payload.long,}
+            //io.emit('recargar',{lat: payload.lat,long: payload.long,})
             //callback(datoBd)            
         });
         Usuarios.findById(payload.mat)
@@ -73,7 +73,7 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
             })
             
             
-        io.emit('actualCoor',coordenada)
+        io.emit('recargar',{lat: payload.lat,long: payload.long,_id: payload.mat})
     })
 }
 
