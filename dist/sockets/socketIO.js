@@ -15,6 +15,7 @@ exports.conectarCliente = (cliente, io) => {
         if (hora < 0) {
             hora += 24;
         }
+        let coordenada;
         let datos = new coordSchema_1.default({
             mat: payload.mat,
             lat: payload.lat,
@@ -30,7 +31,7 @@ exports.conectarCliente = (cliente, io) => {
             if (err) {
                 return;
             }
-            io.emit('recargar', { lat: payload.lat, long: payload.long, });
+            //io.emit('recargar',{lat: payload.lat,long: payload.long,})
             //callback(datoBd)            
         });
         usuarios_1.default.findById(payload.mat)
@@ -59,7 +60,8 @@ exports.conectarCliente = (cliente, io) => {
                         if (err) {
                             return;
                         }
-                        io.emit('actualCoor', datoBd);
+                        //io.emit('actualCoor',datoBd)
+                        coordenada = datoBd;
                     });
                 }
                 else {
@@ -68,10 +70,12 @@ exports.conectarCliente = (cliente, io) => {
                         lat: payload.lat,
                         long: payload.long
                     });
-                    io.emit('actualCoor', coorDb);
+                    coordenada = coorDb;
+                    //io.emit('actualCoor',coorDb)
                 }
             });
         });
+        io.emit('actualCoor', coordenada);
     });
 };
 /*export const noticiasAdmin = (admin:Socket, io:io.Server)=>{

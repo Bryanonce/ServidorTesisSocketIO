@@ -12,6 +12,7 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
         if(hora<0){
             hora+=24
         }
+        let coordenada:any;
         let datos = new baseDatos({
             mat: payload.mat,
             lat: payload.lat,
@@ -27,7 +28,7 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
             if(err){
                 return
             }
-            io.emit('recargar',{lat: payload.lat,long: payload.long,})
+            //io.emit('recargar',{lat: payload.lat,long: payload.long,})
             //callback(datoBd)            
         });
         Usuarios.findById(payload.mat)
@@ -56,7 +57,8 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
                                 if(err){
                                     return
                                 }
-                                io.emit('actualCoor',datoBd)
+                                //io.emit('actualCoor',datoBd)
+                                coordenada = datoBd
                             })
                         }else{
                             coorDb.update({
@@ -64,11 +66,14 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
                                 lat: payload.lat,
                                 long: payload.long
                             })
-                            io.emit('actualCoor',coorDb)
+                            coordenada = coorDb
+                            //io.emit('actualCoor',coorDb)
                         }
                     })
             })
-        
+            
+            
+        io.emit('actualCoor',coordenada)
     })
 }
 
