@@ -10,8 +10,9 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
         ConfigMapa.findOne({})
         .exec((err,configDb:any)=>{
             if(err){
-                return
+                console.log(err);
             }
+            console.log(configDb);
             if((payload.lat>configDb.latini) && (payload.lat<configDb.latfin) && (payload.long>configDb.longini) && (payload.long<configDb.longfin)){
                 console.log('Usuario ha enviado coordenadas')
                 let fecha = new Date()

@@ -108,47 +108,26 @@ router.post('/login',(req:Request,res:Response)=>{
                 err
             });
         };
-        if (!bcrypt.compareSync(body.pass, usuarioDb.pass)) {
-            return res.status(401).json({
-                ok: false,
-                msg: 'No hay match',
-                err
+        if(usuarioDb.tipo === 'ACCESO_RECURSOS'){
+            if (!bcrypt.compareSync(body.pass, usuarioDb.pass)) {
+                return res.status(401).json({
+                    ok: false,
+                    msg: 'No hay match',
+                    err
+                });
+            };
+            let token = jwt.sign({ usuarioDb }, SEMILLA, { expiresIn: CADUCIDAD })
+            res.json({
+                ok: true,
+                token: token
             });
-        };
-        let token = jwt.sign({ usuarioDb }, SEMILLA, { expiresIn: CADUCIDAD })
-        res.json({
-            ok: true,
-            token: token
-        });
+        }else{
+            return res.status(401).json({
+                ok:false,
+                msg: "Área solo para administradores"
+            })
+        }
     })
-    /*Usuario.findOne({ email: body.email }, (err, usuarioDb:any) => {
-        if (err) {
-            return res.status(401).json({
-                ok: false,
-                msg: 'Error',
-                err
-            });
-        };
-        if (!usuarioDb) {
-            return res.status(401).json({
-                ok: false,
-                msg: 'No existe',
-                err
-            });
-        };
-        if (!bcrypt.compareSync(body.pass, usuarioDb.pass)) {
-            return res.status(401).json({
-                ok: false,
-                msg: 'No hay match',
-                err
-            });
-        };
-        let token = jwt.sign({ usuarioDb }, SEMILLA, { expiresIn: process.env.CAD_TOKEN })
-        res.json({
-            ok: true,
-            token: token
-        });
-    });*/
 })
 
 // Configuraciones de Google
@@ -279,7 +258,7 @@ router.get('/config',(req:Request,res:Response)=>{
     })
 })
 
-router.post('/config',(req:Request,res:Response)=>{
+router.post('/config',[validacionToken,validarRol],(req:Request,res:Response)=>{
     let body = req.body;
     let config = new Config({
         latcentro: body.latcentro,
@@ -305,7 +284,7 @@ router.post('/config',(req:Request,res:Response)=>{
     })
 })
 
-router.put('/config',(req:Request,res:Response)=>{
+router.put('/config', [validacionToken,validarRol],(req:Request,res:Response)=>{
     let body = req.body.config;
     let id = req.body.id;
     Config.findByIdAndUpdate(id,

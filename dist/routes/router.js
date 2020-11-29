@@ -22,6 +22,7 @@ const usuarios_1 = __importDefault(require("../schemas/usuarios"));
 const configSchema_1 = __importDefault(require("../schemas/configSchema"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const google_auth_library_1 = require("google-auth-library");
+const mid_1 = require("../middlewares/mid");
 const ultimaCoorSchema_1 = __importDefault(require("../schemas/ultimaCoorSchema"));
 const client = new google_auth_library_1.OAuth2Client(config_1.CLIENTE);
 exports.router.get('/users', /*[validacionToken,validarRol] ,*/ (req, res) => {
@@ -118,48 +119,28 @@ exports.router.post('/login', (req, res) => {
             });
         }
         ;
-        if (!bcrypt_1.default.compareSync(body.pass, usuarioDb.pass)) {
-            return res.status(401).json({
-                ok: false,
-                msg: 'No hay match',
-                err
+        if (usuarioDb.tipo === 'ACCESO_RECURSOS') {
+            if (!bcrypt_1.default.compareSync(body.pass, usuarioDb.pass)) {
+                return res.status(401).json({
+                    ok: false,
+                    msg: 'No hay match',
+                    err
+                });
+            }
+            ;
+            let token = jsonwebtoken_1.default.sign({ usuarioDb }, config_1.SEMILLA, { expiresIn: config_1.CADUCIDAD });
+            res.json({
+                ok: true,
+                token: token
             });
         }
-        ;
-        let token = jsonwebtoken_1.default.sign({ usuarioDb }, config_1.SEMILLA, { expiresIn: config_1.CADUCIDAD });
-        res.json({
-            ok: true,
-            token: token
-        });
+        else {
+            return res.status(401).json({
+                ok: false,
+                msg: "Área solo para administradores"
+            });
+        }
     });
-    /*Usuario.findOne({ email: body.email }, (err, usuarioDb:any) => {
-        if (err) {
-            return res.status(401).json({
-                ok: false,
-                msg: 'Error',
-                err
-            });
-        };
-        if (!usuarioDb) {
-            return res.status(401).json({
-                ok: false,
-                msg: 'No existe',
-                err
-            });
-        };
-        if (!bcrypt.compareSync(body.pass, usuarioDb.pass)) {
-            return res.status(401).json({
-                ok: false,
-                msg: 'No hay match',
-                err
-            });
-        };
-        let token = jwt.sign({ usuarioDb }, SEMILLA, { expiresIn: process.env.CAD_TOKEN })
-        res.json({
-            ok: true,
-            token: token
-        });
-    });*/
 });
 // Configuraciones de Google
 function verify(token) {
@@ -289,7 +270,7 @@ exports.router.get('/config', (req, res) => {
         });
     });
 });
-exports.router.post('/config', (req, res) => {
+exports.router.post('/config', [mid_1.validacionToken, mid_1.validarRol], (req, res) => {
     let body = req.body;
     let config = new configSchema_1.default({
         latcentro: body.latcentro,
@@ -314,7 +295,7 @@ exports.router.post('/config', (req, res) => {
         });
     });
 });
-exports.router.put('/config', (req, res) => {
+exports.router.put('/config', [mid_1.validacionToken, mid_1.validarRol], (req, res) => {
     let body = req.body.config;
     let id = req.body.id;
     configSchema_1.default.findByIdAndUpdate(id, {
