@@ -12,7 +12,7 @@ import UltiDato from '../schemas/ultimaCoorSchema';
 
 const client = new OAuth2Client(CLIENTE);
 
-router.get('/users', /*[validacionToken,validarRol] ,*/(req:Request,res:Response)=>{
+router.get('/users', (req:Request,res:Response)=>{
     Usuario.find({})
         .exec((err, usuarios) => {
             if (err) {
