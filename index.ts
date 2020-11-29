@@ -5,11 +5,9 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
 
-console.log(URL_DATABASE);
 mongoose.connect(URL_DATABASE, {useNewUrlParser: true, useUnifiedTopology: true},(err)=>{
     if(err){
-        console.log(err);
-        throw new Error('Error de Conexión')
+        throw err
     } 
     console.log('Base de datos Online');
 })
