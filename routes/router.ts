@@ -1,9 +1,10 @@
-import {SEMILLA,CLIENTE} from '../global/config';
+import {SEMILLA,CLIENTE, CADUCIDAD} from '../global/config';
 import { Router, Request, Response } from 'express';
 import baseDatos from '../schemas/coordSchema';
 import jwt from 'jsonwebtoken';
 export const router = Router();
 import Usuario from '../schemas/usuarios';
+import Config from '../schemas/configSchema';
 import bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
 import {validacionToken, validarRol} from '../middlewares/mid';
@@ -11,7 +12,7 @@ import UltiDato from '../schemas/ultimaCoorSchema';
 
 const client = new OAuth2Client(CLIENTE);
 
-router.get('/users', [validacionToken,validarRol] ,(req:Request,res:Response)=>{
+router.get('/users', /*[validacionToken,validarRol] ,*/(req:Request,res:Response)=>{
     Usuario.find({})
         .exec((err, usuarios) => {
             if (err) {
@@ -91,11 +92,40 @@ router.get('/datos',(req:Request,res:Response)=>{
 
 router.post('/login',(req:Request,res:Response)=>{
     let body = req.body;
-    Usuario.findOne({ email: body.email }, (err, usuarioDb:any) => {
-        if (err) {
+    Usuario.findOne({ email: body.email })
+    .exec((err,usuarioDb:any)=>{
+        if(err){
+            return res.status(401).json({
+                ok: false,
+                msg: 'Error',
+                err
+            });
+        }
+        if (!usuarioDb) {
+            return res.status(401).json({
+                ok: false,
+                msg: 'No existe',
+                err
+            });
+        };
+        if (!bcrypt.compareSync(body.pass, usuarioDb.pass)) {
             return res.status(401).json({
                 ok: false,
                 msg: 'No hay match',
+                err
+            });
+        };
+        let token = jwt.sign({ usuarioDb }, SEMILLA, { expiresIn: CADUCIDAD })
+        res.json({
+            ok: true,
+            token: token
+        });
+    })
+    /*Usuario.findOne({ email: body.email }, (err, usuarioDb:any) => {
+        if (err) {
+            return res.status(401).json({
+                ok: false,
+                msg: 'Error',
                 err
             });
         };
@@ -118,7 +148,7 @@ router.post('/login',(req:Request,res:Response)=>{
             ok: true,
             token: token
         });
-    });
+    });*/
 })
 
 // Configuraciones de Google
@@ -172,7 +202,7 @@ router.post('/google', async (req:Request,res:Response)=>{
                         }
                     });
                 } else {
-                    let token = jwt.sign({ usuarioDb }, SEMILLA, { expiresIn: process.env.CAD_TOKEN });
+                    let token = jwt.sign({ usuarioDb }, SEMILLA, { expiresIn: CADUCIDAD });
                     return res.json({
                         ok: true,
                         usuario: usuarioDb,
@@ -196,7 +226,7 @@ router.post('/google', async (req:Request,res:Response)=>{
                             token: ''
                         })
                     }
-                    let token = jwt.sign({ usuarioDb }, SEMILLA, { expiresIn: process.env.CAD_TOKEN });
+                    let token = jwt.sign({ usuarioDb }, SEMILLA, { expiresIn: CADUCIDAD });
                     return res.json({
                         ok: true,
                         usuario: usuarioDb,
@@ -219,6 +249,85 @@ router.get('/ultidatos', (req:Request,res:Response)=>{
         return res.json({
             ok:true,
             datos: usuarioDb
+        })
+    })
+})
+
+router.get('/config',(req:Request,res:Response)=>{
+    Config.findOne({})
+    .exec((err,configDb)=>{
+        if(err){
+            return res.status(400).json({
+                ok: false,
+                message: "Error en la Petición"
+            })
+        }
+        if(!configDb){
+            return res.json({
+                ok:true,
+                message: "Éxito en la conexión",
+                existe: false
+            })
+        }
+        return res.json({
+            ok: true,
+            message: "Éxito en la conexión",
+            existe: true,
+            id: configDb._id,
+            config: configDb
+        })
+    })
+})
+
+router.post('/config',(req:Request,res:Response)=>{
+    let body = req.body;
+    let config = new Config({
+        latcentro: body.latcentro,
+        longcentro: body.longcentro,
+        latini: body.latini,
+        latfin: body.latfin,
+        longini: body.longini,
+        longfin: body.longfin,
+        escala: body.escala
+    })
+    config.save((err,configDb)=>{
+        if(err){
+            return res.status(400).json({
+                ok: false,
+                message: "Error al guardar en la Db"
+            })
+        }
+        return res.json({
+            ok:true,
+            message: "Guardado con éxito",
+            id: configDb._id
+        })
+    })
+})
+
+router.put('/config',(req:Request,res:Response)=>{
+    let body = req.body.config;
+    let id = req.body.id;
+    Config.findByIdAndUpdate(id,
+        {
+            latcentro: body.latcentro,
+            longcentro: body.longcentro,
+            latini: body.latini,
+            latfin: body.latfin,
+            longini: body.longini,
+            longfin: body.longfin,
+            escala: body.escala
+        })
+    .exec((err)=>{
+        if(err){
+            return res.status(400).json({
+                ok:false,
+                message: "Error al actualizar"
+            })
+        }
+        return res.json({
+            ok:true,
+            message: "Actualización Completada"
         })
     })
 })

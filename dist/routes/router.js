@@ -19,12 +19,12 @@ const coordSchema_1 = __importDefault(require("../schemas/coordSchema"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 exports.router = express_1.Router();
 const usuarios_1 = __importDefault(require("../schemas/usuarios"));
+const configSchema_1 = __importDefault(require("../schemas/configSchema"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const google_auth_library_1 = require("google-auth-library");
-const mid_1 = require("../middlewares/mid");
 const ultimaCoorSchema_1 = __importDefault(require("../schemas/ultimaCoorSchema"));
 const client = new google_auth_library_1.OAuth2Client(config_1.CLIENTE);
-exports.router.get('/users', [mid_1.validacionToken, mid_1.validarRol], (req, res) => {
+exports.router.get('/users', /*[validacionToken,validarRol] ,*/ (req, res) => {
     usuarios_1.default.find({})
         .exec((err, usuarios) => {
         if (err) {
@@ -101,15 +101,15 @@ exports.router.get('/datos', (req, res) => {
 });
 exports.router.post('/login', (req, res) => {
     let body = req.body;
-    usuarios_1.default.findOne({ email: body.email }, (err, usuarioDb) => {
+    usuarios_1.default.findOne({ email: body.email })
+        .exec((err, usuarioDb) => {
         if (err) {
             return res.status(401).json({
                 ok: false,
-                msg: 'No hay match',
+                msg: 'Error',
                 err
             });
         }
-        ;
         if (!usuarioDb) {
             return res.status(401).json({
                 ok: false,
@@ -126,12 +126,40 @@ exports.router.post('/login', (req, res) => {
             });
         }
         ;
-        let token = jsonwebtoken_1.default.sign({ usuarioDb }, config_1.SEMILLA, { expiresIn: process.env.CAD_TOKEN });
+        let token = jsonwebtoken_1.default.sign({ usuarioDb }, config_1.SEMILLA, { expiresIn: config_1.CADUCIDAD });
         res.json({
             ok: true,
             token: token
         });
     });
+    /*Usuario.findOne({ email: body.email }, (err, usuarioDb:any) => {
+        if (err) {
+            return res.status(401).json({
+                ok: false,
+                msg: 'Error',
+                err
+            });
+        };
+        if (!usuarioDb) {
+            return res.status(401).json({
+                ok: false,
+                msg: 'No existe',
+                err
+            });
+        };
+        if (!bcrypt.compareSync(body.pass, usuarioDb.pass)) {
+            return res.status(401).json({
+                ok: false,
+                msg: 'No hay match',
+                err
+            });
+        };
+        let token = jwt.sign({ usuarioDb }, SEMILLA, { expiresIn: process.env.CAD_TOKEN })
+        res.json({
+            ok: true,
+            token: token
+        });
+    });*/
 });
 // Configuraciones de Google
 function verify(token) {
@@ -185,7 +213,7 @@ exports.router.post('/google', (req, res) => __awaiter(void 0, void 0, void 0, f
                 });
             }
             else {
-                let token = jsonwebtoken_1.default.sign({ usuarioDb }, config_1.SEMILLA, { expiresIn: process.env.CAD_TOKEN });
+                let token = jsonwebtoken_1.default.sign({ usuarioDb }, config_1.SEMILLA, { expiresIn: config_1.CADUCIDAD });
                 return res.json({
                     ok: true,
                     usuario: usuarioDb,
@@ -211,7 +239,7 @@ exports.router.post('/google', (req, res) => __awaiter(void 0, void 0, void 0, f
                         token: ''
                     });
                 }
-                let token = jsonwebtoken_1.default.sign({ usuarioDb }, config_1.SEMILLA, { expiresIn: process.env.CAD_TOKEN });
+                let token = jsonwebtoken_1.default.sign({ usuarioDb }, config_1.SEMILLA, { expiresIn: config_1.CADUCIDAD });
                 return res.json({
                     ok: true,
                     usuario: usuarioDb,
@@ -233,6 +261,81 @@ exports.router.get('/ultidatos', (req, res) => {
         return res.json({
             ok: true,
             datos: usuarioDb
+        });
+    });
+});
+exports.router.get('/config', (req, res) => {
+    configSchema_1.default.findOne({})
+        .exec((err, configDb) => {
+        if (err) {
+            return res.status(400).json({
+                ok: false,
+                message: "Error en la Petición"
+            });
+        }
+        if (!configDb) {
+            return res.json({
+                ok: true,
+                message: "Éxito en la conexión",
+                existe: false
+            });
+        }
+        return res.json({
+            ok: true,
+            message: "Éxito en la conexión",
+            existe: true,
+            id: configDb._id,
+            config: configDb
+        });
+    });
+});
+exports.router.post('/config', (req, res) => {
+    let body = req.body;
+    let config = new configSchema_1.default({
+        latcentro: body.latcentro,
+        longcentro: body.longcentro,
+        latini: body.latini,
+        latfin: body.latfin,
+        longini: body.longini,
+        longfin: body.longfin,
+        escala: body.escala
+    });
+    config.save((err, configDb) => {
+        if (err) {
+            return res.status(400).json({
+                ok: false,
+                message: "Error al guardar en la Db"
+            });
+        }
+        return res.json({
+            ok: true,
+            message: "Guardado con éxito",
+            id: configDb._id
+        });
+    });
+});
+exports.router.put('/config', (req, res) => {
+    let body = req.body.config;
+    let id = req.body.id;
+    configSchema_1.default.findByIdAndUpdate(id, {
+        latcentro: body.latcentro,
+        longcentro: body.longcentro,
+        latini: body.latini,
+        latfin: body.latfin,
+        longini: body.longini,
+        longfin: body.longfin,
+        escala: body.escala
+    })
+        .exec((err) => {
+        if (err) {
+            return res.status(400).json({
+                ok: false,
+                message: "Error al actualizar"
+            });
+        }
+        return res.json({
+            ok: true,
+            message: "Actualización Completada"
         });
     });
 });
