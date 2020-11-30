@@ -11,7 +11,7 @@ const body_parser_1 = __importDefault(require("body-parser"));
 const mongoose_1 = __importDefault(require("mongoose"));
 mongoose_1.default.connect(config_1.URL_DATABASE, { useNewUrlParser: true, useUnifiedTopology: true }, (err) => {
     if (err) {
-        throw new Error('Error de Conexión');
+        throw err;
     }
     console.log('Base de datos Online');
 });

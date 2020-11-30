@@ -25,7 +25,7 @@ const google_auth_library_1 = require("google-auth-library");
 const mid_1 = require("../middlewares/mid");
 const ultimaCoorSchema_1 = __importDefault(require("../schemas/ultimaCoorSchema"));
 const client = new google_auth_library_1.OAuth2Client(config_1.CLIENTE);
-exports.router.get('/users', /*[validacionToken,validarRol] ,*/ (req, res) => {
+exports.router.get('/users', (req, res) => {
     usuarios_1.default.find({})
         .exec((err, usuarios) => {
         if (err) {
