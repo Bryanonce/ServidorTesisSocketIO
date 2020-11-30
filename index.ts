@@ -11,7 +11,7 @@ mongoose.connect(URL_DATABASE, {useNewUrlParser: true, useUnifiedTopology: true}
     } 
     console.log('Base de datos Online');
 })
- 
+  
 
 const server = Server.instance;
 
