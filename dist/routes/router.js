@@ -25,8 +25,13 @@ const google_auth_library_1 = require("google-auth-library");
 const mid_1 = require("../middlewares/mid");
 const ultimaCoorSchema_1 = __importDefault(require("../schemas/ultimaCoorSchema"));
 const client = new google_auth_library_1.OAuth2Client(config_1.CLIENTE);
-exports.router.get('/users', (req, res) => {
-    usuarios_1.default.find({})
+exports.router.get('/users', [mid_1.validacionToken, mid_1.validarRol], (req, res) => {
+    let buscar = {};
+    if (req.query.id) {
+        const id = req.query.id;
+        buscar = { _id: id };
+    }
+    usuarios_1.default.find(buscar)
         .exec((err, usuarios) => {
         if (err) {
             return res.status(400).json({
@@ -45,7 +50,6 @@ exports.router.post('/user', (req, res) => {
     let usuario = new usuarios_1.default({
         email: body.email,
         pass: bcrypt_1.default.hashSync(body.pass, 10),
-        tipo: body.tipo,
         nombre: body.nombre
     });
     usuario.save((err, usuarioDb) => {
@@ -58,6 +62,27 @@ exports.router.post('/user', (req, res) => {
         res.json({
             ok: true,
             usuario: usuarioDb
+        });
+    });
+});
+exports.router.put('/user', [mid_1.validacionToken, mid_1.validarRol], (req, res) => {
+    let body = req.body;
+    usuarios_1.default.findByIdAndUpdate(body._id, {
+        email: body.email,
+        pass: bcrypt_1.default.hashSync(body.pass, 10),
+        nombre: body.nombre,
+        tipo: body.tipo
+    })
+        .exec((err) => {
+        if (err) {
+            return res.status(400).json({
+                ok: false,
+                message: "Error al actualizar"
+            });
+        }
+        return res.json({
+            ok: true,
+            message: "Actualizado con éxito"
         });
     });
 });
@@ -317,6 +342,23 @@ exports.router.put('/config', [mid_1.validacionToken, mid_1.validarRol], (req, r
         return res.json({
             ok: true,
             message: "Actualización Completada"
+        });
+    });
+});
+exports.router.delete('/users', [mid_1.validacionToken, mid_1.validarRol], (req, res) => {
+    console.log('Eliminando Usuario...');
+    let id = req.params.id;
+    usuarios_1.default.findByIdAndDelete(id)
+        .exec((err) => {
+        if (err) {
+            return res.status(400).json({
+                ok: false,
+                message: 'Error al eliminar usuario'
+            });
+        }
+        return res.json({
+            ok: true,
+            message: "Usuario eliminado"
         });
     });
 });

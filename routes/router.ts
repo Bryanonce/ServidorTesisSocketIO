@@ -12,8 +12,13 @@ import UltiDato from '../schemas/ultimaCoorSchema';
 
 const client = new OAuth2Client(CLIENTE);
 
-router.get('/users', (req:Request,res:Response)=>{
-    Usuario.find({})
+router.get('/users',[validacionToken,validarRol], (req:Request,res:Response)=>{
+    let buscar = {}
+    if(req.query.id){
+        const id = req.query.id;
+        buscar = {_id: id}
+    }    
+    Usuario.find(buscar)
         .exec((err, usuarios) => {
             if (err) {
                 return res.status(400).json({
@@ -33,7 +38,6 @@ router.post('/user',(req:Request,res:Response)=>{
     let usuario = new Usuario({
         email: body.email,
         pass: bcrypt.hashSync(body.pass, 10),
-        tipo: body.tipo,
         nombre: body.nombre
     })
     usuario.save((err, usuarioDb) => {
@@ -46,6 +50,28 @@ router.post('/user',(req:Request,res:Response)=>{
         res.json({
             ok: true,
             usuario: usuarioDb
+        })
+    })
+})
+
+router.put('/user',[validacionToken,validarRol],(req:Request,res:Response)=>{
+    let body = req.body;
+    Usuario.findByIdAndUpdate(body._id,{
+        email: body.email,
+        pass: bcrypt.hashSync(body.pass, 10),
+        nombre: body.nombre,
+        tipo: body.tipo
+    })
+    .exec((err)=>{
+        if(err){
+            return res.status(400).json({
+                ok:false,
+                message: "Error al actualizar"
+            })
+        }
+        return res.json({
+            ok:true,
+            message: "Actualizado con éxito"
         })
     })
 })
@@ -307,6 +333,24 @@ router.put('/config', [validacionToken,validarRol],(req:Request,res:Response)=>{
         return res.json({
             ok:true,
             message: "Actualización Completada"
+        })
+    })
+})
+
+router.delete('/users',[validacionToken,validarRol],(req:Request,res:Response)=>{
+    console.log('Eliminando Usuario...')
+    let id = req.params.id;
+    Usuario.findByIdAndDelete(id)
+    .exec((err)=>{
+        if(err){
+            return res.status(400).json({
+                ok:false,
+                message: 'Error al eliminar usuario'
+            })
+        }
+        return res.json({
+            ok:true,
+            message: "Usuario eliminado"
         })
     })
 })

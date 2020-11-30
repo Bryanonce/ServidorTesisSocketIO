@@ -12,9 +12,9 @@ export const conectarCliente = (cliente:Socket, io:io.Server)=>{
             if(err){
                 console.log(err);
             }
-            console.log(configDb);
+            //console.log(configDb);
             if((payload.lat>configDb.latini) && (payload.lat<configDb.latfin) && (payload.long>configDb.longini) && (payload.long<configDb.longfin)){
-                console.log('Usuario ha enviado coordenadas')
+                //console.log('Usuario ha enviado coordenadas')
                 let fecha = new Date()
                 let hora:number = Number(fecha.getHours())-5;
                 if(hora<0){
