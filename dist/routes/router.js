@@ -24,6 +24,8 @@ const bcrypt_1 = __importDefault(require("bcrypt"));
 const google_auth_library_1 = require("google-auth-library");
 const mid_1 = require("../middlewares/mid");
 const ultimaCoorSchema_1 = __importDefault(require("../schemas/ultimaCoorSchema"));
+const path_1 = __importDefault(require("path"));
+const fs_1 = __importDefault(require("fs"));
 const client = new google_auth_library_1.OAuth2Client(config_1.CLIENTE);
 exports.router.get('/users', [mid_1.validacionToken, mid_1.validarRol], (req, res) => {
     let buscar = {};
@@ -65,26 +67,47 @@ exports.router.post('/user', (req, res) => {
         });
     });
 });
-exports.router.put('/user', [mid_1.validacionToken, mid_1.validarRol], (req, res) => {
+exports.router.put('/users/:id', [mid_1.validacionToken, mid_1.validarRol], (req, res) => {
+    let id = req.params.id;
     let body = req.body;
-    usuarios_1.default.findByIdAndUpdate(body._id, {
-        email: body.email,
-        pass: bcrypt_1.default.hashSync(body.pass, 10),
-        nombre: body.nombre,
-        tipo: body.tipo
-    })
-        .exec((err) => {
-        if (err) {
-            return res.status(400).json({
-                ok: false,
-                message: "Error al actualizar"
+    console.log(body);
+    if (!body.pass) {
+        usuarios_1.default.findByIdAndUpdate(id, {
+            email: body.email,
+            nombre: body.nombre,
+        })
+            .exec((err) => {
+            if (err) {
+                return res.status(400).json({
+                    ok: false,
+                    message: "Error al actualizar"
+                });
+            }
+            return res.json({
+                ok: true,
+                message: "Actualizado con éxito"
             });
-        }
-        return res.json({
-            ok: true,
-            message: "Actualizado con éxito"
         });
-    });
+    }
+    else {
+        usuarios_1.default.findByIdAndUpdate(id, {
+            email: body.email,
+            pass: bcrypt_1.default.hashSync(body.pass, 10),
+            nombre: body.nombre,
+        })
+            .exec((err) => {
+            if (err) {
+                return res.status(400).json({
+                    ok: false,
+                    message: "Error al actualizar"
+                });
+            }
+            return res.json({
+                ok: true,
+                message: "Actualizado con éxito"
+            });
+        });
+    }
 });
 exports.router.get('/datos', (req, res) => {
     let anioIni = req.query.anioIni || 2019;
@@ -361,4 +384,103 @@ exports.router.delete('/users', [mid_1.validacionToken, mid_1.validarRol], (req,
             message: "Usuario eliminado"
         });
     });
+});
+//Subida de Archivos
+exports.router.put('/upload/:id', [mid_1.validacionToken, mid_1.validarRol], (req, res) => {
+    let id = req.params.id;
+    usuarios_1.default.findById(id)
+        .exec((err, usuarioDb) => {
+        if (err) {
+            return res.status(400).json({
+                ok: false,
+                message: 'Error en la conexión',
+                err
+            });
+        }
+        ;
+        if (!usuarioDb) {
+            return res.status(400).json({
+                ok: false,
+                message: 'No se encontró el usuario',
+                err
+            });
+        }
+        ;
+        //Path de la img
+        borrArchivo(usuarioDb.img);
+        //Guardar en Server
+        if (!req.files) {
+            return res.status(400).json({
+                ok: false,
+                err: {
+                    message: 'No se ha seleccionado ningún archivo'
+                }
+            });
+        }
+        //console.log('........')
+        let archivo = req.files.archivo;
+        //console.log(req.files['']);
+        let nombreCortado = archivo.name.split('.');
+        let extension = nombreCortado[nombreCortado.length - 1];
+        //console.log(extension);
+        //Extensiones permitidas
+        let extencionesValidas = ['png', 'jpg', 'gif', 'jpeg'];
+        if (extencionesValidas.indexOf(extension) < 0) {
+            return res.status(400).json({
+                ok: false,
+                err: {
+                    extencion: extension,
+                    message: `Las extensiones permitidas son: ${extencionesValidas}`,
+                }
+            });
+        }
+        //Cambiar nombre al archivo
+        let nombreArchivo = `${id}-${new Date().getMilliseconds()}.${extension}`;
+        //console.log(nombreArchivo);
+        archivo.mv(`dist/uploads/img/${nombreArchivo}`, (err) => {
+            if (err) {
+                return res.status(500).json({
+                    ok: false,
+                    err
+                });
+            }
+        });
+        usuarioDb.img = nombreArchivo;
+        usuarioDb.save((err) => {
+            if (err) {
+                return res.status(400).json({
+                    ok: false,
+                    message: err
+                });
+            }
+        });
+        return res.json({
+            ok: true,
+            message: 'Subida con éxito'
+        });
+    });
+});
+let borrArchivo = (nombreImagen) => {
+    try {
+        let pathImg = path_1.default.resolve(__dirname, `../uploads/img/${nombreImagen}`);
+        if (fs_1.default.existsSync(pathImg)) {
+            fs_1.default.unlinkSync(pathImg);
+        }
+    }
+    catch (_a) {
+    }
+};
+exports.router.get('/imagen/:img', (req, res) => {
+    try {
+        let img = req.params.img;
+        let pathImg = path_1.default.resolve(__dirname, `../uploads/img/${img}`);
+        return res.sendFile(pathImg);
+    }
+    catch (err) {
+        return res.status(500).json({
+            ok: false,
+            message: "No se pudo optener la imagen",
+            err
+        });
+    }
 });

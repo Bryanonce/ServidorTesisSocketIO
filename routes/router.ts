@@ -9,6 +9,9 @@ import bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
 import {validacionToken, validarRol} from '../middlewares/mid';
 import UltiDato from '../schemas/ultimaCoorSchema';
+import path from 'path';
+import fs from 'fs';
+
 
 const client = new OAuth2Client(CLIENTE);
 
@@ -54,26 +57,49 @@ router.post('/user',(req:Request,res:Response)=>{
     })
 })
 
-router.put('/user',[validacionToken,validarRol],(req:Request,res:Response)=>{
+router.put('/users/:id',[validacionToken,validarRol],(req:Request,res:Response)=>{
+    let id = req.params.id;
     let body = req.body;
-    Usuario.findByIdAndUpdate(body._id,{
-        email: body.email,
-        pass: bcrypt.hashSync(body.pass, 10),
-        nombre: body.nombre,
-        tipo: body.tipo
-    })
-    .exec((err)=>{
-        if(err){
-            return res.status(400).json({
-                ok:false,
-                message: "Error al actualizar"
-            })
-        }
-        return res.json({
-            ok:true,
-            message: "Actualizado con éxito"
+    console.log(body);
+    if(!body.pass){
+        Usuario.findByIdAndUpdate(id,{
+            email: body.email,
+            nombre: body.nombre,
+            //tipo: body.tipo
         })
-    })
+        .exec((err)=>{
+            if(err){
+                return res.status(400).json({
+                    ok:false,
+                    message: "Error al actualizar"
+                })
+            }
+            return res.json({
+                ok:true,
+                message: "Actualizado con éxito"
+            })
+        })
+    }else{
+        Usuario.findByIdAndUpdate(id,{
+            email: body.email,
+            pass: bcrypt.hashSync(body.pass, 10),
+            nombre: body.nombre,
+            //tipo: body.tipo
+        })
+        .exec((err)=>{
+            if(err){
+                return res.status(400).json({
+                    ok:false,
+                    message: "Error al actualizar"
+                })
+            }
+            return res.json({
+                ok:true,
+                message: "Actualizado con éxito"
+            })
+        })
+    }
+    
 })
 
 router.get('/datos',(req:Request,res:Response)=>{
@@ -353,4 +379,108 @@ router.delete('/users',[validacionToken,validarRol],(req:Request,res:Response)=>
             message: "Usuario eliminado"
         })
     })
+})
+
+//Subida de Archivos
+
+router.put('/upload/:id',[validacionToken,validarRol], (req:Request, res:Response) => {
+    let id = req.params.id;
+    Usuario.findById(id)
+        .exec((err, usuarioDb:any) => {
+            if (err) {
+                return res.status(400).json({
+                    ok: false,
+                    message: 'Error en la conexión',
+                    err
+                });
+            };
+            if (!usuarioDb) {
+                return res.status(400).json({
+                    ok: false,
+                    message: 'No se encontró el usuario',
+                    err
+                });
+            };
+            //Path de la img
+            borrArchivo(usuarioDb.img);
+            //Guardar en Server
+            if (!req.files) {
+                return res.status(400).json({
+                    ok: false,
+                    err: {
+                        message: 'No se ha seleccionado ningún archivo'
+                    }
+                })
+            }
+            //console.log('........')
+            let archivo = req.files.archivo;
+            //console.log(req.files['']);
+            let nombreCortado = archivo.name.split('.');
+            let extension = nombreCortado[nombreCortado.length - 1];
+            //console.log(extension);
+            //Extensiones permitidas
+            let extencionesValidas = ['png', 'jpg', 'gif', 'jpeg'];
+
+            if (extencionesValidas.indexOf(extension) < 0) {
+                return res.status(400).json({
+                    ok: false,
+                    err: {
+                        extencion: extension,
+                        message: `Las extensiones permitidas son: ${extencionesValidas}`,
+                    }
+                })
+            }
+
+            //Cambiar nombre al archivo
+            let nombreArchivo = `${id}-${new Date().getMilliseconds()}.${extension}`
+            //console.log(nombreArchivo);
+            archivo.mv(`dist/uploads/img/${nombreArchivo}`, (err) => {
+                if (err) {
+                    return res.status(500).json({
+                        ok: false,
+                        err
+                    });
+                }
+            });
+            usuarioDb.img = nombreArchivo
+            usuarioDb.save((err:any) => {
+                if (err) {
+                    return res.status(400).json({
+                        ok: false,
+                        message: err
+                    })
+                }
+            })
+            return res.json({
+                ok: true,
+                message: 'Subida con éxito'
+            })
+        });
+});
+
+let borrArchivo = (nombreImagen:string) => {
+    try{
+        let pathImg = path.resolve(__dirname, `../uploads/img/${nombreImagen}`);
+        if (fs.existsSync(pathImg)) {
+            fs.unlinkSync(pathImg);
+        }
+    }catch{
+    }
+    
+};
+
+router.get('/imagen/:img',(req:Request,res:Response)=>{
+    try{
+        let img = req.params.img;
+        let pathImg = path.resolve(__dirname, `../uploads/img/${img}`);
+        return res.sendFile(pathImg)
+    }catch(err){
+        return res.status(500).json({
+            ok:false,
+            message: "No se pudo optener la imagen",
+            err
+        })
+    }
+
+    
 })
