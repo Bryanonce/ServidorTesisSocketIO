@@ -47,8 +47,8 @@ class Server {
     escucharSockets() {
         console.log('Escuchando conexión');
         this.io.on('connection', (cliente) => {
-            console.log('Cliente Conectado');
-            socket.conectarCliente(cliente, this.io);
+            socket.enviarCoord(cliente, this.io);
+            socket.conectarCliente(cliente);
         });
     }
 }

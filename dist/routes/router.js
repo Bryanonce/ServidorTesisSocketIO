@@ -327,7 +327,9 @@ exports.router.post('/config', [mid_1.validacionToken, mid_1.validarRol], (req, 
         latfin: body.latfin,
         longini: body.longini,
         longfin: body.longfin,
-        escala: body.escala
+        escala: body.escala,
+        peligromedio: body.peligromedio,
+        peligroalto: body.peligroalto
     });
     config.save((err, configDb) => {
         if (err) {
@@ -353,7 +355,9 @@ exports.router.put('/config', [mid_1.validacionToken, mid_1.validarRol], (req, r
         latfin: body.latfin,
         longini: body.longini,
         longfin: body.longfin,
-        escala: body.escala
+        escala: body.escala,
+        peligromedio: body.peligromedio,
+        peligroalto: body.peligroalto
     })
         .exec((err) => {
         if (err) {

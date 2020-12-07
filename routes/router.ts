@@ -319,7 +319,9 @@ router.post('/config',[validacionToken,validarRol],(req:Request,res:Response)=>{
         latfin: body.latfin,
         longini: body.longini,
         longfin: body.longfin,
-        escala: body.escala
+        escala: body.escala,
+        peligromedio:body.peligromedio,
+        peligroalto:body.peligroalto
     })
     config.save((err,configDb)=>{
         if(err){
@@ -347,7 +349,9 @@ router.put('/config', [validacionToken,validarRol],(req:Request,res:Response)=>{
             latfin: body.latfin,
             longini: body.longini,
             longfin: body.longfin,
-            escala: body.escala
+            escala: body.escala,
+            peligromedio:body.peligromedio,
+	        peligroalto:body.peligroalto
         })
     .exec((err)=>{
         if(err){
@@ -481,6 +485,5 @@ router.get('/imagen/:img',(req:Request,res:Response)=>{
             err
         })
     }
-
-    
 })
+

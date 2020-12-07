@@ -1,6 +1,21 @@
 export const SERVER_PORT:number = Number(process.env.PORT) || 5000;
 
-export const URL_DATABASE:string = String(process.env.MONGO_URI) || 'mongodb://localhost:27017/tesis'
+//=========================
+//         Entorno
+//=========================
+process.env.NODE_ENV = process.env.NODE_ENV || 'dev';
+
+//=========================
+//       Base de datos
+//=========================
+let urlDataBase: string;
+if(process.env.NODE_ENV === 'dev'){
+	urlDataBase = 'mongodb://localhost:27017/tesis';
+}else{
+	urlDataBase = String(process.env.MONGO_URI);
+}
+
+export const URL_DATABASE:string = urlDataBase;
 
 export const SEMILLA:string = String(process.env.SEED) || 'semilla-de-prueba';
 

@@ -31,6 +31,8 @@ const configSchema = new mongoose_1.Schema({
     latfin: objeto,
     longini: objeto,
     longfin: objeto,
-    escala: objeto
+    escala: objeto,
+    peligromedio: objeto,
+    peligroalto: objeto
 });
 exports.default = mongoose_1.default.model('ConfigMapa', configSchema);
