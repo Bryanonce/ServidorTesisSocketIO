@@ -97,7 +97,7 @@ export const enviarCoord = (cliente:Socket, io:io.Server)=>{
             if(!configData){
                 return
             }else{
-                let distMin = configData.peligroalto;
+                let distMin = configData.peligromedio;
                 let count = 0;
 
                 Usuarios.find({activo:true})
@@ -128,8 +128,11 @@ export const enviarCoord = (cliente:Socket, io:io.Server)=>{
                         })
                     }
                 })
-                if(count>=configData.peligromedio){
-                    io.emit('avisoPeligro',{id: payload.mat, message:'Atención, es probable que exceda la cantidad de personas en el espacio'})
+                console.log('conteo: ',count);
+                console.log('peligromed: ',configData.peligromedio);
+                console.log('peligroalt: ',configData.peligroalto);
+                if(count>=configData.peligroalto){
+                    io.emit('avisoPeligro',{id: payload.mat, peligro:true})
                 }
             }
         })
