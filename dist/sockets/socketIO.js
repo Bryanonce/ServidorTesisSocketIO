@@ -132,9 +132,6 @@ exports.enviarCoord = (cliente, io) => {
                         });
                     }
                 });
-                console.log('conteo: ', count);
-                console.log('peligromed: ', configData.peligromedio);
-                console.log('peligroalt: ', configData.peligroalto);
                 if (count >= configData.peligroalto) {
                     io.emit('avisoPeligro', { id: payload.mat, peligro: true });
                 }
