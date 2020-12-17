@@ -10,27 +10,47 @@ const usuarios_1 = __importDefault(require("../schemas/usuarios"));
 const configSchema_1 = __importDefault(require("../schemas/configSchema"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const config_1 = require("../global/config");
+const KalmanFilter = require('kalmanjs');
 exports.enviarCoord = (cliente, io) => {
     cliente.on('enviarCoordServ', (payload, callback) => {
-        //console.log('Nueva Medicion')
+        let latArray = [];
+        let longArray = [];
+        let mat = payload[0].mat;
+        payload.forEach((element) => {
+            latArray.push(element.lat);
+            longArray.push(element.long);
+        });
+        //Filtrar la latitud
+        let kalmanFilterLat = new KalmanFilter({ R: 0.01, Q: 3 });
+        let dataConstantKalmanLat = latArray.map(function (v) {
+            return kalmanFilterLat.filter(v);
+        });
+        dataConstantKalmanLat;
+        let latitud = kalmanFilterLat.x;
+        //Filtrar la longitud
+        let kalmanFilterLong = new KalmanFilter({ R: 0.01, Q: 3 });
+        let dataConstantKalmanLong = longArray.map(function (v) {
+            return kalmanFilterLong.filter(v);
+        });
+        dataConstantKalmanLong;
+        let longitud = kalmanFilterLong.x;
+        //Procedimiento
         configSchema_1.default.findOne({})
             .exec((err, configDb) => {
             if (err) {
                 console.log(err);
             }
-            //console.log(configDb);
-            if ((payload.lat > configDb.latini) && (payload.lat < configDb.latfin) && (payload.long > configDb.longini) && (payload.long < configDb.longfin)) {
+            if ((latitud > configDb.latini) && (latitud < configDb.latfin) && (longitud > configDb.longini) && (longitud < configDb.longfin)) {
                 //console.log('Usuario ha enviado coordenadas')
                 let fecha = new Date();
                 let hora = Number(fecha.getHours()) - 5;
                 if (hora < 0) {
                     hora += 24;
                 }
-                //let coordenada:any;
                 let datos = new coordSchema_1.default({
-                    mat: payload.mat,
-                    lat: payload.lat,
-                    long: payload.long,
+                    mat: mat,
+                    lat: latitud,
+                    long: longitud,
                     anio: fecha.getFullYear(),
                     mes: fecha.getMonth(),
                     dia: fecha.getDate(),
@@ -43,7 +63,7 @@ exports.enviarCoord = (cliente, io) => {
                         console.log(err);
                     }
                 });
-                usuarios_1.default.findById(payload.mat)
+                usuarios_1.default.findById(mat)
                     .exec((err, usuarioDb) => {
                     if (err) {
                         return;
@@ -51,19 +71,18 @@ exports.enviarCoord = (cliente, io) => {
                     if (!usuarioDb) {
                         return;
                     }
-                    ultimaCoorSchema_1.default.findById(payload.mat)
+                    ultimaCoorSchema_1.default.findById(mat)
                         .exec((err, usuarioData) => {
                         if (err) {
                             return;
                         }
-                        //console.log(usuarioData);
                         if (!usuarioData) {
                             let ultiCoor = new ultimaCoorSchema_1.default({
-                                _id: payload.mat,
+                                _id: mat,
                                 nombre: usuarioDb.nombre,
                                 img: usuarioDb.img,
-                                lat: payload.lat,
-                                long: payload.long,
+                                lat: latitud,
+                                long: longitud,
                                 color: '#' + Math.floor(Math.random() * 16777215).toString(16)
                             });
                             ultiCoor.save((err, datoBd) => {
@@ -76,19 +95,19 @@ exports.enviarCoord = (cliente, io) => {
                             });
                         }
                         else {
-                            ultimaCoorSchema_1.default.findByIdAndUpdate(payload.mat, { img: usuarioDb.img, lat: payload.lat, long: payload.long })
+                            ultimaCoorSchema_1.default.findByIdAndUpdate(mat, { img: usuarioDb.img, lat: latitud, long: longitud })
                                 .exec((err) => {
                                 if (err) {
                                     console.log(err);
                                 }
                                 else {
-                                    console.log('Actualizado');
+                                    //console.log('Actualizado');
                                 }
                             });
                         }
                     });
                 });
-                io.emit('recargar', { lat: payload.lat, long: payload.long, _id: payload.mat });
+                io.emit('recargar', { lat: latitud, long: longitud, _id: mat });
             }
         });
         configSchema_1.default.findOne({})
@@ -123,7 +142,7 @@ exports.enviarCoord = (cliente, io) => {
                                     return;
                                 }
                                 else {
-                                    let distancia = haversineDistance([payload.long, payload.lat], [userDb.long, userDb.lat]) * 1000;
+                                    let distancia = haversineDistance([longitud, latitud], [userDb.long, userDb.lat]) * 1000;
                                     if (distancia <= distMin) {
                                         count++;
                                     }
@@ -133,7 +152,7 @@ exports.enviarCoord = (cliente, io) => {
                     }
                 });
                 if (count >= configData.peligroalto) {
-                    io.emit('avisoPeligro', { id: payload.mat, peligro: true });
+                    io.emit('avisoPeligro', { id: mat, peligro: true });
                 }
             }
         });
@@ -172,7 +191,7 @@ exports.conectarCliente = (cliente) => {
                 }
                 else {
                     let id = decode.usuarioDb._id;
-                    console.log(decode.usuarioDb._id);
+                    //console.log(decode.usuarioDb._id)
                     usuarios_1.default.findByIdAndUpdate(id, { activo: true })
                         .exec((err, usuarioDb) => {
                         if (err) {

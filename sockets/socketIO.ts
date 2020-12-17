@@ -6,29 +6,53 @@ import UsuarioInterface from '../classes/usuario'
 import ConfigMapa from '../schemas/configSchema';
 import jwt from 'jsonwebtoken';
 import {SEMILLA} from '../global/config';
-
+const KalmanFilter = require('kalmanjs')
 
 export const enviarCoord = (cliente:Socket, io:io.Server)=>{
-    cliente.on('enviarCoordServ',(payload:{mat:string,lat:number,long:number},callback:Function)=>{
-        //console.log('Nueva Medicion')
+    cliente.on('enviarCoordServ',(payload:{mat:string,lat:number,long:number}[],callback:Function)=>{
+        let latArray:number[] = [];
+        let longArray:number[] = [];
+        let mat:string = payload[0].mat;
+        payload.forEach((element)=>{
+            latArray.push(element.lat);
+            longArray.push(element.long);
+        })
+
+        //Filtrar la latitud
+        let kalmanFilterLat = new KalmanFilter({R: 0.01, Q: 3});
+        let dataConstantKalmanLat = latArray.map(function(v) {
+            return kalmanFilterLat.filter(v);
+        });
+        dataConstantKalmanLat;
+        let latitud = kalmanFilterLat.x;
+
+
+        //Filtrar la longitud
+        let kalmanFilterLong = new KalmanFilter({R: 0.01, Q: 3});
+        let dataConstantKalmanLong = longArray.map(function(v) {
+            return kalmanFilterLong.filter(v);
+        });
+        dataConstantKalmanLong;
+        let longitud = kalmanFilterLong.x;
+
+
+        //Procedimiento
         ConfigMapa.findOne({})
         .exec((err,configDb:any)=>{
             if(err){
                 console.log(err);
             }
-            //console.log(configDb);
-            if((payload.lat>configDb.latini) && (payload.lat<configDb.latfin) && (payload.long>configDb.longini) && (payload.long<configDb.longfin)){
+            if((latitud>configDb.latini) && (latitud<configDb.latfin) && (longitud>configDb.longini) && (longitud<configDb.longfin)){
                 //console.log('Usuario ha enviado coordenadas')
                 let fecha = new Date()
                 let hora:number = Number(fecha.getHours())-5;
                 if(hora<0){
                     hora+=24
                 }
-                //let coordenada:any;
                 let datos = new baseDatos({
-                    mat: payload.mat,
-                    lat: payload.lat,
-                    long: payload.long,
+                    mat: mat,
+                    lat: latitud,
+                    long: longitud,
                     anio: fecha.getFullYear(),
                     mes: fecha.getMonth(),
                     dia: fecha.getDate(),
@@ -41,7 +65,7 @@ export const enviarCoord = (cliente:Socket, io:io.Server)=>{
                         console.log(err)
                     }
                 });
-                Usuarios.findById(payload.mat)
+                Usuarios.findById(mat)
                     .exec((err,usuarioDb:UsuarioInterface)=>{
                         if(err){
                             return
@@ -49,19 +73,18 @@ export const enviarCoord = (cliente:Socket, io:io.Server)=>{
                         if(!usuarioDb){
                             return
                         }
-                        UltiCoor.findById(payload.mat)
+                        UltiCoor.findById(mat)
                         .exec((err,usuarioData)=>{
                             if(err){
                                 return
                             }
-                            //console.log(usuarioData);
                             if(!usuarioData){
                                 let ultiCoor = new UltiCoor({
-                                    _id: payload.mat,
+                                    _id: mat,
                                     nombre: usuarioDb.nombre,
                                     img: usuarioDb.img,
-                                    lat: payload.lat,
-                                    long: payload.long,
+                                    lat: latitud,
+                                    long: longitud,
                                     color: '#' + Math.floor(Math.random()*16777215).toString(16)
                                 })
                                 ultiCoor.save((err,datoBd)=>{
@@ -72,19 +95,19 @@ export const enviarCoord = (cliente:Socket, io:io.Server)=>{
                                     }
                                 })
                             }else{
-                                UltiCoor.findByIdAndUpdate(payload.mat,{img: usuarioDb.img,lat: payload.lat,long: payload.long})
+                                UltiCoor.findByIdAndUpdate(mat,{img: usuarioDb.img,lat: latitud,long: longitud})
                                 .exec((err)=>{
                                     if(err){
                                         console.log(err);
                                     }else{
-                                        console.log('Actualizado');
+                                        //console.log('Actualizado');
                                     }
                                 })
                             }
                         })
                         
                     })
-                io.emit('recargar',{lat: payload.lat,long: payload.long,_id: payload.mat})
+                io.emit('recargar',{lat: latitud,long: longitud,_id: mat})
 
             }
         })
@@ -119,7 +142,7 @@ export const enviarCoord = (cliente:Socket, io:io.Server)=>{
                                 if(!userDb){
                                     return
                                 }else{
-                                    let distancia = haversineDistance([payload.long,payload.lat],[userDb.long,userDb.lat])*1000
+                                    let distancia = haversineDistance([longitud,latitud],[userDb.long,userDb.lat])*1000
                                     if(distancia<=distMin){
                                         count++
                                     }
@@ -130,7 +153,7 @@ export const enviarCoord = (cliente:Socket, io:io.Server)=>{
                 })
                 
                 if(count>=configData.peligroalto){
-                    io.emit('avisoPeligro',{id: payload.mat, peligro:true})
+                    io.emit('avisoPeligro',{id: mat, peligro:true})
                 }
             }
         })
@@ -169,7 +192,7 @@ export const conectarCliente = (cliente:Socket)=>{
                     console.log('Token no coincide');
                 }else{
                     let id:string = decode.usuarioDb._id;
-                    console.log(decode.usuarioDb._id)
+                    //console.log(decode.usuarioDb._id)
                     Usuarios.findByIdAndUpdate(id,{activo:true})
                     .exec((err,usuarioDb)=>{
                         if(err){
