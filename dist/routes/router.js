@@ -109,6 +109,33 @@ exports.router.put('/users/:id', [mid_1.validacionToken, mid_1.validarRol], (req
         });
     }
 });
+exports.router.get('/real', (req, res) => {
+    coordSchema_1.default.aggregate([
+        { $group: {
+                _id: "$mat",
+                lat: { $last: "$lat" },
+                long: { $last: "$long" }
+            } }
+    ])
+        .exec((err, dataDb) => {
+        if (err) {
+            return res.status(400).json({
+                ok: false,
+                message: 'Error al encontrar los datos'
+            });
+        }
+        if (!dataDb) {
+            return res.status(400).json({
+                ok: false,
+                message: 'Base de datos vacìa'
+            });
+        }
+        return res.json({
+            ok: true,
+            datos: dataDb
+        });
+    });
+});
 exports.router.get('/datos', (req, res) => {
     let anioIni = req.query.anioIni || 2019;
     let anioFin = req.query.anioFin || 2040;
@@ -138,7 +165,7 @@ exports.router.get('/datos', (req, res) => {
         if (err) {
             res.status(400).json({
                 ok: false,
-                mensaje: "Error en el primer excec",
+                message: "Error en el primer excec",
                 err
             });
         }

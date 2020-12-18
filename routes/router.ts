@@ -102,6 +102,35 @@ router.put('/users/:id',[validacionToken,validarRol],(req:Request,res:Response)=
     
 })
 
+router.get('/real',(req:Request,res:Response)=>{
+    baseDatos.aggregate( 
+        [
+        { $group : { 
+            _id : "$mat",
+            lat: { $last: "$lat" },
+            long: { $last: "$long" }
+            } } 
+        ])
+        .exec((err,dataDb)=>{
+            if(err){
+                return res.status(400).json({
+                    ok:false,
+                    message: 'Error al encontrar los datos'
+                })
+            }
+            if(!dataDb){
+                return res.status(400).json({
+                    ok:false,
+                    message: 'Base de datos vacìa'
+                })
+            }
+            return res.json({
+                ok:true,
+                datos:dataDb
+            })
+        })
+})
+
 router.get('/datos',(req:Request,res:Response)=>{
     let anioIni = req.query.anioIni || 2019;
 	let anioFin = req.query.anioFin || 2040;
@@ -131,7 +160,7 @@ router.get('/datos',(req:Request,res:Response)=>{
 		if(err){
 			res.status(400).json({
 				ok: false,
-				mensaje: "Error en el primer excec",
+				message: "Error en el primer excec",
 				err
 			});
 		}
