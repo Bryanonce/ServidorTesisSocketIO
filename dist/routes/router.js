@@ -110,12 +110,36 @@ exports.router.put('/users/:id', [mid_1.validacionToken, mid_1.validarRol], (req
     }
 });
 exports.router.get('/real', (req, res) => {
+    let funcionValidacion = (element) => {
+        let promesa = new Promise((resolve, reject) => {
+            usuarios_1.default.findById(element._id)
+                .exec((err, usuarioDb) => {
+                if (err) {
+                    reject('Error');
+                }
+                if (!usuarioDb) {
+                    resolve({
+                        ok: false,
+                        activo: false
+                    });
+                }
+                resolve({
+                    ok: true,
+                    activo: usuarioDb.activo
+                });
+            });
+        });
+        return promesa;
+    };
+    let datosProcesados = [];
     coordSchema_1.default.aggregate([
-        { $group: {
+        {
+            $group: {
                 _id: "$mat",
                 lat: { $last: "$lat" },
                 long: { $last: "$long" }
-            } }
+            }
+        }
     ])
         .exec((err, dataDb) => {
         if (err) {
@@ -130,10 +154,31 @@ exports.router.get('/real', (req, res) => {
                 message: 'Base de datos vacìa'
             });
         }
-        return res.json({
-            ok: true,
-            datos: dataDb
-        });
+        //Verificar si el usuario se encuentra Online
+        dataDb.forEach((element, index) => __awaiter(void 0, void 0, void 0, function* () {
+            yield funcionValidacion(element)
+                .then((res) => {
+                //console.log(res);
+                //console.log(element);
+                if (res.ok === true && res.activo === true) {
+                    datosProcesados.push(element);
+                    //console.log(datosProcesados);
+                }
+            })
+                .catch((err) => {
+                return res.status(400).json({
+                    ok: false,
+                    message: err
+                });
+            });
+            if (index === (dataDb.length - 1)) {
+                //console.log(datosProcesados);
+                return res.json({
+                    ok: true,
+                    datos: datosProcesados
+                });
+            }
+        }));
     });
 });
 exports.router.get('/datos', (req, res) => {

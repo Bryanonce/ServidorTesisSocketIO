@@ -1,4 +1,4 @@
-import {SEMILLA,CLIENTE, CADUCIDAD} from '../global/config';
+import { SEMILLA, CLIENTE, CADUCIDAD } from '../global/config';
 import { Router, Request, Response } from 'express';
 import baseDatos from '../schemas/coordSchema';
 import jwt from 'jsonwebtoken';
@@ -7,7 +7,7 @@ import Usuario from '../schemas/usuarios';
 import Config from '../schemas/configSchema';
 import bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
-import {validacionToken, validarRol} from '../middlewares/mid';
+import { validacionToken, validarRol } from '../middlewares/mid';
 import UltiDato from '../schemas/ultimaCoorSchema';
 import path from 'path';
 import fs from 'fs';
@@ -15,12 +15,12 @@ import fs from 'fs';
 
 const client = new OAuth2Client(CLIENTE);
 
-router.get('/users',[validacionToken,validarRol], (req:Request,res:Response)=>{
+router.get('/users', [validacionToken, validarRol], (req: Request, res: Response) => {
     let buscar = {}
-    if(req.query.id){
+    if (req.query.id) {
         const id = req.query.id;
-        buscar = {_id: id}
-    }    
+        buscar = { _id: id }
+    }
     Usuario.find(buscar)
         .exec((err, usuarios) => {
             if (err) {
@@ -36,7 +36,7 @@ router.get('/users',[validacionToken,validarRol], (req:Request,res:Response)=>{
         })
 })
 
-router.post('/user',(req:Request,res:Response)=>{
+router.post('/user', (req: Request, res: Response) => {
     let body = req.body;
     let usuario = new Usuario({
         email: body.email,
@@ -57,169 +57,216 @@ router.post('/user',(req:Request,res:Response)=>{
     })
 })
 
-router.put('/users/:id',[validacionToken,validarRol],(req:Request,res:Response)=>{
+router.put('/users/:id', [validacionToken, validarRol], (req: Request, res: Response) => {
     let id = req.params.id;
     let body = req.body;
     console.log(body);
-    if(!body.pass){
-        Usuario.findByIdAndUpdate(id,{
+    if (!body.pass) {
+        Usuario.findByIdAndUpdate(id, {
             email: body.email,
             nombre: body.nombre,
             //tipo: body.tipo
         })
-        .exec((err)=>{
-            if(err){
-                return res.status(400).json({
-                    ok:false,
-                    message: "Error al actualizar"
+            .exec((err) => {
+                if (err) {
+                    return res.status(400).json({
+                        ok: false,
+                        message: "Error al actualizar"
+                    })
+                }
+                return res.json({
+                    ok: true,
+                    message: "Actualizado con éxito"
                 })
-            }
-            return res.json({
-                ok:true,
-                message: "Actualizado con éxito"
             })
-        })
-    }else{
-        Usuario.findByIdAndUpdate(id,{
+    } else {
+        Usuario.findByIdAndUpdate(id, {
             email: body.email,
             pass: bcrypt.hashSync(body.pass, 10),
             nombre: body.nombre,
             //tipo: body.tipo
         })
-        .exec((err)=>{
-            if(err){
-                return res.status(400).json({
-                    ok:false,
-                    message: "Error al actualizar"
+            .exec((err) => {
+                if (err) {
+                    return res.status(400).json({
+                        ok: false,
+                        message: "Error al actualizar"
+                    })
+                }
+                return res.json({
+                    ok: true,
+                    message: "Actualizado con éxito"
                 })
-            }
-            return res.json({
-                ok:true,
-                message: "Actualizado con éxito"
             })
-        })
     }
-    
+
 })
 
-router.get('/real',(req:Request,res:Response)=>{
-    baseDatos.aggregate( 
+router.get('/real', (req: Request, res: Response) => {
+    let funcionValidacion = (element: { _id: string, lat: number, long: number }) => {
+        let promesa: Promise<any> = new Promise((resolve, reject) => {
+            Usuario.findById(element._id)
+                .exec((err, usuarioDb: { activo: boolean }) => {
+                    if (err) {
+                        reject('Error')
+                    }
+                    if (!usuarioDb) {
+                        resolve({
+                            ok: false,
+                            activo: false
+                        })
+                    }
+                    resolve({
+                        ok: true,
+                        activo: usuarioDb.activo
+                    });
+                })
+        })
+        return promesa
+    }
+    let datosProcesados: { _id: string, lat: number, long: number }[] = []
+    baseDatos.aggregate(
         [
-        { $group : { 
-            _id : "$mat",
-            lat: { $last: "$lat" },
-            long: { $last: "$long" }
-            } } 
+            {
+                $group: {
+                    _id: "$mat",
+                    lat: { $last: "$lat" },
+                    long: { $last: "$long" }
+                }
+            }
         ])
-        .exec((err,dataDb)=>{
-            if(err){
+        .exec((err, dataDb: { _id: string, lat: number, long: number }[]) => {
+            if (err) {
                 return res.status(400).json({
-                    ok:false,
+                    ok: false,
                     message: 'Error al encontrar los datos'
                 })
             }
-            if(!dataDb){
+            if (!dataDb) {
                 return res.status(400).json({
-                    ok:false,
+                    ok: false,
                     message: 'Base de datos vacìa'
                 })
             }
-            return res.json({
-                ok:true,
-                datos:dataDb
+
+            //Verificar si el usuario se encuentra Online
+
+            dataDb.forEach(async (element,index) => {
+                await funcionValidacion(element)
+                    .then((res: { ok: boolean, activo: boolean }) => {
+                        //console.log(res);
+                        //console.log(element);
+                        if (res.ok===true && res.activo===true) {
+                            datosProcesados.push(element);
+                            //console.log(datosProcesados);
+                        }
+                    })
+                    .catch((err) => {
+                        return res.status(400).json({
+                            ok: false,
+                            message: err
+                        })
+                    })
+                if(index===(dataDb.length-1)){
+                    //console.log(datosProcesados);
+                    return res.json({
+                        ok: true,
+                        datos: datosProcesados
+                    })
+                }
             })
         })
 })
 
-router.get('/datos',(req:Request,res:Response)=>{
+router.get('/datos', (req: Request, res: Response) => {
     let anioIni = req.query.anioIni || 2019;
-	let anioFin = req.query.anioFin || 2040;
-	let mesIni = req.query.mesIni || 1;
-	let mesFin = req.query.mesFin || 12;
-	let diaIni = req.query.diaIni || 1;
-	let diaFin = req.query.diaFin || 31;
-	let horaIni = req.query.horaIni || 0;
-	let horaFin = req.query.horaFin || 23;
-	let minutoIni = req.query.minutoIni || 0;
-	let minutoFin = req.query.minutoFin || 59;
-	baseDatos.find({
-		$and:[
-        	{'anio': {$gte:`${anioIni}`}},
-        	{'anio': {$lte:`${anioFin}`}},
-        	{'mes': {$gte:`${mesIni}`}},
-        	{'mes': {$lte:`${mesFin}`}},
-        	{'dia': {$gte:`${diaIni}`}},
-        	{'dia': {$lte:`${diaFin}`}},
-        	{'hora': {$gte:`${horaIni}`}},
-        	{'hora': {$lte:`${horaFin}`}},
-        	{'minuto': {$gte:`${minutoIni}`}},
-        	{'minuto': {$lte:`${minutoFin}`}}
-    	]
-	},'lat long')
-	.exec((err,req)=>{
-		if(err){
-			res.status(400).json({
-				ok: false,
-				message: "Error en el primer excec",
-				err
-			});
-		}
-		res.json({
-			ok: true,
-			usuarios: req
-		})
-	})
+    let anioFin = req.query.anioFin || 2040;
+    let mesIni = req.query.mesIni || 1;
+    let mesFin = req.query.mesFin || 12;
+    let diaIni = req.query.diaIni || 1;
+    let diaFin = req.query.diaFin || 31;
+    let horaIni = req.query.horaIni || 0;
+    let horaFin = req.query.horaFin || 23;
+    let minutoIni = req.query.minutoIni || 0;
+    let minutoFin = req.query.minutoFin || 59;
+    baseDatos.find({
+        $and: [
+            { 'anio': { $gte: `${anioIni}` } },
+            { 'anio': { $lte: `${anioFin}` } },
+            { 'mes': { $gte: `${mesIni}` } },
+            { 'mes': { $lte: `${mesFin}` } },
+            { 'dia': { $gte: `${diaIni}` } },
+            { 'dia': { $lte: `${diaFin}` } },
+            { 'hora': { $gte: `${horaIni}` } },
+            { 'hora': { $lte: `${horaFin}` } },
+            { 'minuto': { $gte: `${minutoIni}` } },
+            { 'minuto': { $lte: `${minutoFin}` } }
+        ]
+    }, 'lat long')
+        .exec((err, req) => {
+            if (err) {
+                res.status(400).json({
+                    ok: false,
+                    message: "Error en el primer excec",
+                    err
+                });
+            }
+            res.json({
+                ok: true,
+                usuarios: req
+            })
+        })
 })
 
-router.post('/login',(req:Request,res:Response)=>{
+router.post('/login', (req: Request, res: Response) => {
     let body = req.body;
     Usuario.findOne({ email: body.email })
-    .exec((err,usuarioDb:any)=>{
-        if(err){
-            return res.status(401).json({
-                ok: false,
-                msg: 'Error',
-                err
-            });
-        }
-        if (!usuarioDb) {
-            return res.status(401).json({
-                ok: false,
-                msg: 'No existe',
-                err
-            });
-        };
-        if(usuarioDb.tipo === 'ACCESO_RECURSOS'){
-            if (!bcrypt.compareSync(body.pass, usuarioDb.pass)) {
+        .exec((err, usuarioDb: any) => {
+            if (err) {
                 return res.status(401).json({
                     ok: false,
-                    msg: 'No hay match',
+                    msg: 'Error',
+                    err
+                });
+            }
+            if (!usuarioDb) {
+                return res.status(401).json({
+                    ok: false,
+                    msg: 'No existe',
                     err
                 });
             };
-            let token = jwt.sign({ usuarioDb }, SEMILLA, { expiresIn: CADUCIDAD })
-            res.json({
-                ok: true,
-                token: token
-            });
-        }else{
-            return res.status(401).json({
-                ok:false,
-                msg: "Área solo para administradores"
-            })
-        }
-    })
+            if (usuarioDb.tipo === 'ACCESO_RECURSOS') {
+                if (!bcrypt.compareSync(body.pass, usuarioDb.pass)) {
+                    return res.status(401).json({
+                        ok: false,
+                        msg: 'No hay match',
+                        err
+                    });
+                };
+                let token = jwt.sign({ usuarioDb }, SEMILLA, { expiresIn: CADUCIDAD })
+                res.json({
+                    ok: true,
+                    token: token
+                });
+            } else {
+                return res.status(401).json({
+                    ok: false,
+                    msg: "Área solo para administradores"
+                })
+            }
+        })
 })
 
 // Configuraciones de Google
-async function verify(token:string) {
+async function verify(token: string) {
     const ticket = await client.verifyIdToken({
         idToken: token,
         audience: CLIENTE, // Specify the CLIENT_ID of the app that accesses the backend
         // Or, if multiple clients access the backend:
         //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
     });
-    const payload:any = ticket.getPayload();
+    const payload: any = ticket.getPayload();
     return {
         nombre: payload.name,
         email: payload.email,
@@ -228,15 +275,15 @@ async function verify(token:string) {
     }
 }
 
-router.post('/google', async (req:Request,res:Response)=>{
-    if(!req.body.idtoken){
+router.post('/google', async (req: Request, res: Response) => {
+    if (!req.body.idtoken) {
         return res.json({
-            ok:false,
+            ok: false,
             message: 'No se encontró el token'
         });
     }
-	let token = req.body.idtoken;
-    let googleUser:any = await verify(token)
+    let token = req.body.idtoken;
+    let googleUser: any = await verify(token)
         .catch(e => {
             return res.status(403).json({
                 ok: false,
@@ -245,7 +292,7 @@ router.post('/google', async (req:Request,res:Response)=>{
             });
         });
     Usuario.findOne({ email: googleUser.email })
-        .exec((err, usuarioDb:any) => {
+        .exec((err, usuarioDb: any) => {
             if (err) {
                 return res.status(500).json({
                     ok: false,
@@ -297,50 +344,50 @@ router.post('/google', async (req:Request,res:Response)=>{
         })
 });
 
-router.get('/ultidatos',[validacionToken,validarRol], (req:Request,res:Response)=>{
+router.get('/ultidatos', [validacionToken, validarRol], (req: Request, res: Response) => {
     let id = req.query.id;
     UltiDato.findById(id)
-    .exec((err,usuarioDb)=>{
-        if(err){
-            return res.status(400).json({
-                ok:false,
-                datos: []
-            })
-        }
-        return res.json({
-            ok:true,
-            datos: usuarioDb
-        })
-    })
-})
-
-router.get('/config',(req:Request,res:Response)=>{
-    Config.findOne({})
-    .exec((err,configDb)=>{
-        if(err){
-            return res.status(400).json({
-                ok: false,
-                message: "Error en la Petición"
-            })
-        }
-        if(!configDb){
+        .exec((err, usuarioDb) => {
+            if (err) {
+                return res.status(400).json({
+                    ok: false,
+                    datos: []
+                })
+            }
             return res.json({
-                ok:true,
-                message: "Éxito en la conexión",
-                existe: false
+                ok: true,
+                datos: usuarioDb
             })
-        }
-        return res.json({
-            ok: true,
-            message: "Éxito en la conexión",
-            existe: true,
-            id: configDb._id,
-            config: configDb
         })
-    })
 })
 
-router.post('/config',[validacionToken,validarRol],(req:Request,res:Response)=>{
+router.get('/config', (req: Request, res: Response) => {
+    Config.findOne({})
+        .exec((err, configDb) => {
+            if (err) {
+                return res.status(400).json({
+                    ok: false,
+                    message: "Error en la Petición"
+                })
+            }
+            if (!configDb) {
+                return res.json({
+                    ok: true,
+                    message: "Éxito en la conexión",
+                    existe: false
+                })
+            }
+            return res.json({
+                ok: true,
+                message: "Éxito en la conexión",
+                existe: true,
+                id: configDb._id,
+                config: configDb
+            })
+        })
+})
+
+router.post('/config', [validacionToken, validarRol], (req: Request, res: Response) => {
     let body = req.body;
     let config = new Config({
         latcentro: body.latcentro,
@@ -350,25 +397,25 @@ router.post('/config',[validacionToken,validarRol],(req:Request,res:Response)=>{
         longini: body.longini,
         longfin: body.longfin,
         escala: body.escala,
-        peligromedio:body.peligromedio,
-        peligroalto:body.peligroalto
+        peligromedio: body.peligromedio,
+        peligroalto: body.peligroalto
     })
-    config.save((err,configDb)=>{
-        if(err){
+    config.save((err, configDb) => {
+        if (err) {
             return res.status(400).json({
                 ok: false,
                 message: "Error al guardar en la Db"
             })
         }
         return res.json({
-            ok:true,
+            ok: true,
             message: "Guardado con éxito",
             id: configDb._id
         })
     })
 })
 
-router.put('/config', [validacionToken,validarRol],(req:Request,res:Response)=>{
+router.put('/config', [validacionToken, validarRol], (req: Request, res: Response) => {
     let body = req.body.config;
     let id = req.body.id;
     Config.findByIdAndUpdate(id,
@@ -380,47 +427,47 @@ router.put('/config', [validacionToken,validarRol],(req:Request,res:Response)=>{
             longini: body.longini,
             longfin: body.longfin,
             escala: body.escala,
-            peligromedio:body.peligromedio,
-	        peligroalto:body.peligroalto
+            peligromedio: body.peligromedio,
+            peligroalto: body.peligroalto
         })
-    .exec((err)=>{
-        if(err){
-            return res.status(400).json({
-                ok:false,
-                message: "Error al actualizar"
+        .exec((err) => {
+            if (err) {
+                return res.status(400).json({
+                    ok: false,
+                    message: "Error al actualizar"
+                })
+            }
+            return res.json({
+                ok: true,
+                message: "Actualización Completada"
             })
-        }
-        return res.json({
-            ok:true,
-            message: "Actualización Completada"
         })
-    })
 })
 
-router.delete('/users/:id',[validacionToken,validarRol],(req:Request,res:Response)=>{
+router.delete('/users/:id', [validacionToken, validarRol], (req: Request, res: Response) => {
     console.log('Eliminando Usuario...')
     let id = req.params.id;
     Usuario.findByIdAndDelete(id)
-    .exec((err)=>{
-        if(err){
-            return res.status(400).json({
-                ok:false,
-                message: 'Error al eliminar usuario'
+        .exec((err) => {
+            if (err) {
+                return res.status(400).json({
+                    ok: false,
+                    message: 'Error al eliminar usuario'
+                })
+            }
+            return res.json({
+                ok: true,
+                message: "Usuario eliminado"
             })
-        }
-        return res.json({
-            ok:true,
-            message: "Usuario eliminado"
         })
-    })
 })
 
 //Subida de Archivos
 
-router.put('/upload/:id',[validacionToken,validarRol], (req:Request, res:Response) => {
+router.put('/upload/:id', [validacionToken, validarRol], (req: Request, res: Response) => {
     let id = req.params.id;
     Usuario.findById(id)
-        .exec((err, usuarioDb:any) => {
+        .exec((err, usuarioDb: any) => {
             if (err) {
                 return res.status(400).json({
                     ok: false,
@@ -477,7 +524,7 @@ router.put('/upload/:id',[validacionToken,validarRol], (req:Request, res:Respons
                 }
             });
             usuarioDb.img = nombreArchivo
-            usuarioDb.save((err:any) => {
+            usuarioDb.save((err: any) => {
                 if (err) {
                     return res.status(400).json({
                         ok: false,
@@ -492,25 +539,25 @@ router.put('/upload/:id',[validacionToken,validarRol], (req:Request, res:Respons
         });
 });
 
-let borrArchivo = (nombreImagen:string) => {
-    try{
+let borrArchivo = (nombreImagen: string) => {
+    try {
         let pathImg = path.resolve(__dirname, `../uploads/img/${nombreImagen}`);
         if (fs.existsSync(pathImg)) {
             fs.unlinkSync(pathImg);
         }
-    }catch{
+    } catch {
     }
-    
+
 };
 
-router.get('/imagen/:img',(req:Request,res:Response)=>{
-    try{
+router.get('/imagen/:img', (req: Request, res: Response) => {
+    try {
         let img = req.params.img;
         let pathImg = path.resolve(__dirname, `../uploads/img/${img}`);
         return res.sendFile(pathImg)
-    }catch(err){
+    } catch (err) {
         return res.status(500).json({
-            ok:false,
+            ok: false,
             message: "No se pudo optener la imagen",
             err
         })
