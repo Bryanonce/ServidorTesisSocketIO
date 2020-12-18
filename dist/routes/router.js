@@ -278,8 +278,9 @@ exports.router.post('/google', (req, res) => __awaiter(void 0, void 0, void 0, f
         }
     });
 }));
-exports.router.get('/ultidatos', (req, res) => {
-    ultimaCoorSchema_1.default.find({})
+exports.router.get('/ultidatos', [mid_1.validacionToken, mid_1.validarRol], (req, res) => {
+    let id = req.query.id;
+    ultimaCoorSchema_1.default.findById(id)
         .exec((err, usuarioDb) => {
         if (err) {
             return res.status(400).json({
@@ -372,7 +373,7 @@ exports.router.put('/config', [mid_1.validacionToken, mid_1.validarRol], (req, r
         });
     });
 });
-exports.router.delete('/users', [mid_1.validacionToken, mid_1.validarRol], (req, res) => {
+exports.router.delete('/users/:id', [mid_1.validacionToken, mid_1.validarRol], (req, res) => {
     console.log('Eliminando Usuario...');
     let id = req.params.id;
     usuarios_1.default.findByIdAndDelete(id)

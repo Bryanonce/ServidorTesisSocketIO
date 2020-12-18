@@ -43,6 +43,7 @@ exports.enviarCoord = (cliente, io) => {
             if ((latitud > configDb.latini) && (latitud < configDb.latfin) && (longitud > configDb.longini) && (longitud < configDb.longfin)) {
                 //console.log('Usuario ha enviado coordenadas')
                 let fecha = new Date();
+                console.log(fecha);
                 let hora = Number(fecha.getHours()) - 5;
                 if (hora < 0) {
                     hora += 24;
@@ -83,19 +84,20 @@ exports.enviarCoord = (cliente, io) => {
                                 img: usuarioDb.img,
                                 lat: latitud,
                                 long: longitud,
-                                color: '#' + Math.floor(Math.random() * 16777215).toString(16)
+                                color: '#' + Math.floor(Math.random() * 16777215).toString(16),
+                                fecha: String(new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate(), hora, fecha.getMinutes(), fecha.getSeconds(), fecha.getMilliseconds()))
                             });
                             ultiCoor.save((err, datoBd) => {
                                 if (err) {
                                     console.log(err);
                                 }
                                 else {
-                                    console.log(datoBd);
+                                    //console.log(datoBd);
                                 }
                             });
                         }
                         else {
-                            ultimaCoorSchema_1.default.findByIdAndUpdate(mat, { img: usuarioDb.img, lat: latitud, long: longitud })
+                            ultimaCoorSchema_1.default.findByIdAndUpdate(mat, { img: usuarioDb.img, lat: latitud, long: longitud, fecha: String(new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate(), hora, fecha.getMinutes(), fecha.getSeconds(), fecha.getMilliseconds())) })
                                 .exec((err) => {
                                 if (err) {
                                     console.log(err);
@@ -180,7 +182,7 @@ function haversineDistance(coords1, coords2, isMiles) {
         d /= 1.60934;
     return d;
 }
-exports.conectarCliente = (cliente) => {
+exports.conectarCliente = (cliente, io) => {
     cliente.on('conectado', (payload) => {
         //console.log(payload.token)
         try {
@@ -204,6 +206,7 @@ exports.conectarCliente = (cliente) => {
                         else {
                             console.log('Cliente Conectado: ' + id);
                             cliente.id = id;
+                            io.emit('userOnline', { id: cliente.id, online: true });
                         }
                     });
                 }
@@ -224,6 +227,7 @@ exports.conectarCliente = (cliente) => {
                 console.log('No se encontro el usuario');
             }
             else {
+                io.emit('userOnline', { id: cliente.id, online: false });
                 console.log('Cliente Desconectado: ' + cliente.id);
             }
         });

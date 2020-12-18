@@ -18,6 +18,10 @@ const UltCoordSchem = new Schema({
     color: {
         type: String,
         required: [true, "Se necesita Color"]
+    },
+    fecha: {
+        type: Date,
+        required: [true, "Se necesita Fecha"]
     }
 
 });

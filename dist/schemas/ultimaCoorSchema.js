@@ -38,6 +38,10 @@ const UltCoordSchem = new mongoose_1.Schema({
     color: {
         type: String,
         required: [true, "Se necesita Color"]
+    },
+    fecha: {
+        type: Date,
+        required: [true, "Se necesita Fecha"]
     }
 });
 exports.default = mongoose_1.default.model('UltCoor', UltCoordSchem);

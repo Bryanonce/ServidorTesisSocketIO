@@ -268,8 +268,9 @@ router.post('/google', async (req:Request,res:Response)=>{
         })
 });
 
-router.get('/ultidatos', (req:Request,res:Response)=>{
-    UltiDato.find({})
+router.get('/ultidatos',[validacionToken,validarRol], (req:Request,res:Response)=>{
+    let id = req.query.id;
+    UltiDato.findById(id)
     .exec((err,usuarioDb)=>{
         if(err){
             return res.status(400).json({
@@ -367,7 +368,7 @@ router.put('/config', [validacionToken,validarRol],(req:Request,res:Response)=>{
     })
 })
 
-router.delete('/users',[validacionToken,validarRol],(req:Request,res:Response)=>{
+router.delete('/users/:id',[validacionToken,validarRol],(req:Request,res:Response)=>{
     console.log('Eliminando Usuario...')
     let id = req.params.id;
     Usuario.findByIdAndDelete(id)
