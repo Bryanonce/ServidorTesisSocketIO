@@ -10,9 +10,16 @@ const usuarios_1 = __importDefault(require("../schemas/usuarios"));
 const configSchema_1 = __importDefault(require("../schemas/configSchema"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const config_1 = require("../global/config");
+const notiSchema_1 = __importDefault(require("../schemas/notiSchema"));
 const KalmanFilter = require('kalmanjs');
 exports.enviarCoord = (cliente, io) => {
     cliente.on('enviarCoordServ', (payload, callback) => {
+        let fecha = new Date();
+        console.log(fecha);
+        let hora = Number(fecha.getHours()) - 5;
+        if (hora < 0) {
+            hora += 24;
+        }
         let latArray = [];
         let longArray = [];
         let mat = payload[0].mat;
@@ -42,12 +49,6 @@ exports.enviarCoord = (cliente, io) => {
             }
             if ((latitud > configDb.latini) && (latitud < configDb.latfin) && (longitud > configDb.longini) && (longitud < configDb.longfin)) {
                 //console.log('Usuario ha enviado coordenadas')
-                let fecha = new Date();
-                console.log(fecha);
-                let hora = Number(fecha.getHours()) - 5;
-                if (hora < 0) {
-                    hora += 24;
-                }
                 let datos = new coordSchema_1.default({
                     mat: mat,
                     lat: latitud,
@@ -141,7 +142,7 @@ exports.enviarCoord = (cliente, io) => {
                                     return;
                                 }
                                 if (!userDb) {
-                                    return;
+                                    //return
                                 }
                                 else {
                                     let distancia = haversineDistance([longitud, latitud], [userDb.long, userDb.lat]) * 1000;
@@ -153,8 +154,24 @@ exports.enviarCoord = (cliente, io) => {
                         });
                     }
                 });
+                console.log(count);
+                console.log(configData.peligroalto);
                 if (count >= configData.peligroalto) {
                     io.emit('avisoPeligro', { id: mat, peligro: true });
+                    let notify = new notiSchema_1.default({
+                        mat: mat,
+                        lat: latitud,
+                        long: longitud,
+                        fecha: String(new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate(), hora, fecha.getMinutes(), fecha.getSeconds(), fecha.getMilliseconds()))
+                    });
+                    //console.log('*********')
+                    notify.save((err, notificacionDb) => {
+                        if (err) {
+                            console.log(err);
+                            return;
+                        }
+                        console.log(notificacionDb);
+                    });
                 }
             }
         });

@@ -11,6 +11,7 @@ import { validacionToken, validarRol } from '../middlewares/mid';
 import UltiDato from '../schemas/ultimaCoorSchema';
 import path from 'path';
 import fs from 'fs';
+import Notificacion from '../schemas/notiSchema';
 
 
 const client = new OAuth2Client(CLIENTE);
@@ -564,3 +565,39 @@ router.get('/imagen/:img', (req: Request, res: Response) => {
     }
 })
 
+router.get('/alert', [validacionToken, validarRol],(req:Request,res:Response)=>{
+    let id = req.query.id;
+    Notificacion.find({mat:id})
+    .exec((err,notiDb)=>{
+        if(err){
+            return res.status(400).json({
+                ok:false,
+                message: 'Ocurrió un error',
+                error: err
+            })
+        }
+        Usuario.findById(id)
+        .exec((err,usuarioDb)=>{
+            if(err){
+                return res.status(400).json({
+                    ok:false,
+                    message: 'Ocurrió un error',
+                    error: err
+                })
+            }
+            if(!usuarioDb){
+                return res.status(400).json({
+                    ok:false,
+                    message: 'Ocurrió un error',
+                    error: err
+                })
+            }
+            return res.json({
+                ok:true,
+                usuario:usuarioDb,
+                notify:notiDb                
+            })
+        })
+        
+    })
+})

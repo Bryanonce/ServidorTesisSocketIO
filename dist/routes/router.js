@@ -26,6 +26,7 @@ const mid_1 = require("../middlewares/mid");
 const ultimaCoorSchema_1 = __importDefault(require("../schemas/ultimaCoorSchema"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
+const notiSchema_1 = __importDefault(require("../schemas/notiSchema"));
 const client = new google_auth_library_1.OAuth2Client(config_1.CLIENTE);
 exports.router.get('/users', [mid_1.validacionToken, mid_1.validarRol], (req, res) => {
     let buscar = {};
@@ -560,4 +561,39 @@ exports.router.get('/imagen/:img', (req, res) => {
             err
         });
     }
+});
+exports.router.get('/alert', [mid_1.validacionToken, mid_1.validarRol], (req, res) => {
+    let id = req.query.id;
+    notiSchema_1.default.find({ mat: id })
+        .exec((err, notiDb) => {
+        if (err) {
+            return res.status(400).json({
+                ok: false,
+                message: 'Ocurrió un error',
+                error: err
+            });
+        }
+        usuarios_1.default.findById(id)
+            .exec((err, usuarioDb) => {
+            if (err) {
+                return res.status(400).json({
+                    ok: false,
+                    message: 'Ocurrió un error',
+                    error: err
+                });
+            }
+            if (!usuarioDb) {
+                return res.status(400).json({
+                    ok: false,
+                    message: 'Ocurrió un error',
+                    error: err
+                });
+            }
+            return res.json({
+                ok: true,
+                usuario: usuarioDb,
+                notify: notiDb
+            });
+        });
+    });
 });
