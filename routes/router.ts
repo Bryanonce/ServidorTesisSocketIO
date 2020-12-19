@@ -567,7 +567,8 @@ router.get('/imagen/:img', (req: Request, res: Response) => {
 
 router.get('/alert', [validacionToken, validarRol],(req:Request,res:Response)=>{
     let id = req.query.id;
-    Notificacion.find({mat:id})
+    //console.log(id);
+    Notificacion.find({mat:id}).sort({fecha:-1})
     .exec((err,notiDb)=>{
         if(err){
             return res.status(400).json({
@@ -578,6 +579,10 @@ router.get('/alert', [validacionToken, validarRol],(req:Request,res:Response)=>{
         }
         Usuario.findById(id)
         .exec((err,usuarioDb)=>{
+            //console.log('****************')
+            //console.log(err);
+            
+            //console.log(usuarioDb);
             if(err){
                 return res.status(400).json({
                     ok:false,

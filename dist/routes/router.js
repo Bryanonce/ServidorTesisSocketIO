@@ -564,7 +564,8 @@ exports.router.get('/imagen/:img', (req, res) => {
 });
 exports.router.get('/alert', [mid_1.validacionToken, mid_1.validarRol], (req, res) => {
     let id = req.query.id;
-    notiSchema_1.default.find({ mat: id })
+    //console.log(id);
+    notiSchema_1.default.find({ mat: id }).sort({ fecha: -1 })
         .exec((err, notiDb) => {
         if (err) {
             return res.status(400).json({
@@ -575,6 +576,9 @@ exports.router.get('/alert', [mid_1.validacionToken, mid_1.validarRol], (req, re
         }
         usuarios_1.default.findById(id)
             .exec((err, usuarioDb) => {
+            //console.log('****************')
+            //console.log(err);
+            //console.log(usuarioDb);
             if (err) {
                 return res.status(400).json({
                     ok: false,
