@@ -173,7 +173,7 @@ export const enviarCoord = (cliente: Socket, io: io.Server) => {
                                 console.log(err);
                                 return;
                             }
-                            console.log(notificacionDb)
+                            //console.log(notificacionDb)
                         });
                     }
                 }

@@ -170,7 +170,7 @@ exports.enviarCoord = (cliente, io) => {
                             console.log(err);
                             return;
                         }
-                        console.log(notificacionDb);
+                        //console.log(notificacionDb)
                     });
                 }
             }
